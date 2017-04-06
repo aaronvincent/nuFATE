@@ -1,0 +1,13 @@
+#Examples of how to compile each of the included fortran codes:
+
+#Total cross sections:
+gfortran -o CCxstot.x SM_crosssecs.f90 -I/path/to/cubpack/Src -L/path/to/cubpack/Src/ -lcubpack -L/path/to/LHAPDF/lib -lLHAPDF
+
+
+#NC differential cross sections:
+gfortran -o CCxsdiff.x SM_diff_crosssecs.f90 -I/path/to/cubpack/Src -L/path/to/cubpack/Src/ -lcubpack -L/path/to/LHAPDF/lib -lLHAPDF
+
+#CC tau regeneration:
+gfortran -o tauRegen.x SM_nutau_diff_crossec.f90 -I/path/to/cubpack/Src -L/path/to/cubpack/Src/ -lcubpack -L/path/to/LHAPDF/lib -lLHAPDF
+
+
