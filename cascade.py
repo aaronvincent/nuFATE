@@ -53,6 +53,7 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
         v: right hand side matrix normalized eigenvectors.
         ci: coordinates of the input spectrum in the eigensystem basis.
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
+        phi_0: input spectrum.
     """
     #    print flavor
     if flavor == -1:
@@ -95,4 +96,4 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
     ci = LA.solve(v, phi_0)  # alternative to lstsq solution
     #    ci = LA.lstsq(v,phi_0)[0]
 
-    return w, v, ci, energy_nodes
+    return w, v, ci, energy_nodes, phi_0
