@@ -77,5 +77,5 @@ def get_t_earth(theta):
         n = lambda x: rho(theta, x)  #mass density
         t = integrate.quad(
             lambda x: n(xmax - x), 0, xmax, epsrel=1.0e-3,
-            epsabs=1.0e-18)[0] * kmTom.  #kg/m^2
+            epsabs=1.0e-18)[0] * kmTom  #kg/m^2
     return t
