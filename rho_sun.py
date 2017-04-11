@@ -7,9 +7,9 @@ RSun = 695980.0  # km
 _sun_model = np.genfromtxt(
     "/Users/carlos/Programs/nuSQuIDS/data/astro/bs05_agsop.dat")
 
-_sun_radius = sun_model[:, 1]
-_sun_density = sun_model[:, 2]
-_inter_density = interpolate.interp1d(sun_radius, sun_density)
+_sun_radius = _sun_model[:, 1]
+_sun_density = _sun_model[:, 2]
+_inter_density = interpolate.interp1d(_sun_radius, _sun_density)
 
 def rho_sun(x, b):
     """ Returns the Sun density in gr/cm^3.
@@ -23,7 +23,7 @@ def rho_sun(x, b):
     """
     r = np.sqrt(RSun**2 + x**2 - 2 * x * np.sqrt(RSun**2 - b**2)) / RSun
     if r <= _sun_radius[0]:
-        return sun_density[0]
+        return _sun_density[0]
     elif r > _sun_radius[-1]:
         return 0.
     else:
