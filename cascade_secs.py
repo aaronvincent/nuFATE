@@ -79,7 +79,7 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
         NumNodes: number of energy nodes to use
 
     Returns:
-        w: right hand side matrix eigenvalues in unit of cm^2 GeV.
+        w: right hand side matrix eigenvalues in unit of cm^2.
         v: right hand side matrix normalized eigenvectors.
         ci: coordinates of the input spectrum in the eigensystem basis.
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
