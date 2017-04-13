@@ -87,7 +87,7 @@
         end if
       end if
 !   4) X (everything else hadronic)
-    if (z .gt. 0.3) then
+    if (z .lt. 0.3) then
     g0 = 1./.30!*heaviside(0.3-z)
      dntaudE = dntaudE + .13*g0
     end if
