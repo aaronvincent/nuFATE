@@ -55,7 +55,6 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
         phi_0: input spectrum.
     """
-    #    print flavor
     if flavor == -1:
         sigma_fname = "data/nuebarxs.dat"
     elif flavor == -2:
