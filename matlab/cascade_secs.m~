@@ -54,24 +54,28 @@ function  [RHSMatrix, sigma_array] = get_RHS_matrices(energy_nodes,sigma_fname,s
     NumNodes = length(energy_nodes);
     h5flag = 1
     if h5flag
-            sigma_array1 = h5read('../data/NuFATECrossSections.h5',sigma_fname);
-    sigma_array2 = h5read('../data/NuFATECrossSections.h5',sig3fname);
-    dsigmady = h5read('../data/NuFATECrossSections.h5',dxs_fname);
-    emuregen = h5read('../data/NuFATECrossSections.h5',secname);
-    tauregen = h5read('../data/NuFATECrossSections.h5',regenname);
+            sigma_array1 = load(['../data/' sigma_fname);
+    sigma_array2 = load(sig3fname);
+    dsigmady = load(dxs_fname);
+    emuregen = load(secname);
+    tauregen = load(regenname);
+    DeltaE = diff(log(energy_nodes));
+    RHSMatrix1 = zeros(NumNodes);
+    RHSMatrix2 = zeros(NumNodes);
+    RHSMatrix3 = zeros(NumNodes);
+    RHSMatrix4 = zeros(NumNodes);
     else
          sigma_array1 = load(['../data/' sigma_fname);
     sigma_array2 = load(['../data/' sig3fname);
     dsigmady = load(['../data/' dxs_fname);
     emuregen = load(['../data/' secname);
     tauregen = load(['../data/' regenname);
-    end
     DeltaE = diff(log(energy_nodes));
     RHSMatrix1 = zeros(NumNodes);
     RHSMatrix2 = zeros(NumNodes);
     RHSMatrix3 = zeros(NumNodes);
     RHSMatrix4 = zeros(NumNodes);   
-    
+    end
 
 %     1: Regular NC bit
     for i = 1:NumNodes
