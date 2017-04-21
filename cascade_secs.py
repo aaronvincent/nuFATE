@@ -1,6 +1,7 @@
 """ Funcitons to compute the right hand side matrix of neutrino secondaries evolution and diagonalized it.
 """
 
+import tables
 import numpy as np
 import scipy as sp
 from numpy import linalg as LA
@@ -128,5 +129,7 @@ def get_eigs(flavor, gamma, h5_filename):
     #    else:
     ci = LA.solve(v, phi_0)  # alternative to lstsq solution
     #    ci = LA.lstsq(v,phi_0)[0]
+
+    xsh5.close()
 
     return w, v, ci, energy_nodes, phi_0
