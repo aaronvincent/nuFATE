@@ -1,18 +1,18 @@
 """ Funcitons to compute the right hand side matrix of neutrino evolution and diagonalized it.
 """
 
+import tables
 import numpy as np
 import scipy as sp
 from numpy import linalg as LA
 
-
-def get_RHS_matrices(energy_nodes, sigma_fname, dxs_fname):
+def get_RHS_matrices(energy_nodes, sigma_array, dxs_array):
     """ Returns the right hand side (RHS) matrices.
 
     Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        sigma_fname: cross section table filename.
-        dxs_fname: differential cross section filename.
+        sigma_fname: one dimensional numpy array with total cross sections in cm^2.
+        dxs_fname: two dimensional numpy array with the differential cross section cm^2 GeV^-1.
 
     Returns:
         RHSMatrix: matrix of size n_nodes*n_nodes containing the E^2 weighted differential
@@ -20,9 +20,7 @@ def get_RHS_matrices(energy_nodes, sigma_fname, dxs_fname):
         sigma_array: one dimensional numpy array containing the total cross section
                      per energy node in cm^2.
     """
-    NumNodes = energy_nodes.shape[0]
-    sigma_array = np.loadtxt(sigma_fname)
-    dsigmady = np.loadtxt(dxs_fname)
+    NumNodes = len(energy_nodes)
     DeltaE = np.diff(np.log(energy_nodes))
     RHSMatrix = np.zeros((NumNodes, NumNodes))
     # fill in diagonal terms
@@ -34,7 +32,7 @@ def get_RHS_matrices(energy_nodes, sigma_fname, dxs_fname):
     return RHSMatrix, sigma_array
 
 
-def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
+def get_eigs(flavor, gamma, h5_filename):
     """ Returns the eigenvalues for a given flavor, spectral index, and energy range.
 
     Args:.
@@ -44,9 +42,7 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
                 2: muon neutrino,
                 and 3: tau neutrino.
         gamma: spectral index of the initial flux, E^-gamma.
-        logemin: log10 of the lower enegy of interest. Energy in GeV.
-        logemax: log10 of the maximum energy of interest. Energy in GeV.
-        NumNodes: number of energy nodes to use
+        h5_filename: complete path and filename of the h5 object that contains the cross sections.
 
     Returns:
         w: right hand side matrix eigenvalues in unit of cm^2.
@@ -55,44 +51,53 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
         phi_0: input spectrum.
     """
+
+    xsh5 = tables.open(h5_filename,"r")
+
     if flavor == -1:
-        sigma_fname = "data/nuebarxs.dat"
+        sigma_array = xsh5.root.total_cross_section.nuebarxs[:]
     elif flavor == -2:
-        sigma_fname = "data/numubarxs.dat"
+        sigma_array = xsh5.root.total_cross_section.numubarxs[:]
     elif flavor == -3:
-        sigma_fname = "data/nutaubarxs.dat"
+        sigma_array = xsh5.root.total_cross_section.nutaubarxs[:]
     elif flavor == 1:
-        sigma_fname = "data/nuexs.dat"
+        sigma_array = xsh5.root.total_cross_section.nuexs[:]
     elif flavor == 2:
-        sigma_fname = "data/numuxs.dat"
+        sigma_array = xsh5.root.total_cross_section.numuxs[:]
     elif flavor == 3:
-        sigma_fname = "data/nutauxs.dat"
+        sigma_array = xsh5.root.total_cross_section.nutauxs[:]
 
     if flavor > 0:
-        dxs_fname = "data/dxsnu.dat"
+        dxs_array = xsh5.root.differential_cross_sections.dxsnu[:]
     else:
-        dxs_fname = "data/dxsnubar.dat"
+        dxs_array = xsh5.root.differential_cross_sections.dxsnubar[:]
 
-    #Note that the solution is scaled by E^2; if you want to modify the incoming 
-    #spectrum a lot, you'll need to change this here, as well as in the definition of RHS.
+    logemax = np.log10(root.total_cross_sections._v_attrs.max_energy)
+    logemin = np.log10(root.total_cross_sections._v_attrs.min_energy)
+    NumNodes = root.total_cross_sections._v_attrs.number_energy_nodes
     energy_nodes = np.logspace(logemin, logemax, NumNodes)
-    RHSMatrix, sigma_array = get_RHS_matrices(energy_nodes, sigma_fname,
-                                              dxs_fname)
+
+    #Note that the solution is scaled by E^2; if you want to modify the incoming
+    #spectrum a lot, you'll need to change this here, as well as in the definition of RHS.
+    RHSMatrix, sigma_array = get_RHS_matrices(energy_nodes, sigma_array,
+                                              dxs_array)
 
     #tau regenration
     if flavor == -3:
         RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_fname,
-                                       "data/tbarfull.dat")
+                                       xsh5.root.tau_decay_spectrum.tbarfull[:])
         RHSMatrix = RHSMatrix + RHregen
 
     elif flavor == 3:
         RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_fname,
-                                       "data/tfull.dat")
+                                       xsh5.root.tau_decay_spectrum.tfull[:])
         RHSMatrix = RHSMatrix + RHregen
 
     phi_0 = energy_nodes**(2 - gamma)
     w, v = LA.eig(-np.diag(sigma_array) + RHSMatrix)
     ci = LA.solve(v, phi_0)  # alternative to lstsq solution
     #    ci = LA.lstsq(v,phi_0)[0]
+
+    xsh5.close()
 
     return w, v, ci, energy_nodes, phi_0
