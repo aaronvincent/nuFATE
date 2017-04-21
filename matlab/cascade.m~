@@ -17,33 +17,33 @@ if nargin >= 3 %you shouldn't be specifying only one of these:
     NumNodes = varargin{5};
 end
 
-%get cross section locations
+%read plain text files
 if flavor==-1
-    sigma_fname = '/total_cross_sections/nuebarxs';
+    sigma_fname = '../data/nuebarxs.dat';
 elseif flavor == -2
-    sigma_fname = '/total_cross_sections/numubarxs';
+    sigma_fname = '../data/numubarxs.dat';
 elseif flavor == -3
-    sigma_fname = '/total_cross_sections/nutaubarxs';
+    sigma_fname = '../data/nutaubarxs.dat';
 elseif flavor == 1
-    sigma_fname = '/total_cross_sections/nuexs';
+    sigma_fname = '../data/nuexs.dat';
 elseif flavor == 2
-    sigma_fname = '/total_cross_sections/numuxs';
+    sigma_fname = '../data/numuxs.dat';
 elseif flavor == 3
-    sigma_fname = '/total_cross_sections/nutauxs';
+    sigma_fname = '../data/nutauxs.dat';
 end
 if flavor > 0
-    dxs_fname = '/differential_cross_sections/dxsnu';
+    dxs_fname = '../data/dxsnu.dat';
 else
-    dxs_fname = '/differential_cross_sections/dxsnubar';
+    dxs_fname = '../data/dxsnubar.dat';
 end
-
+end
 energy_nodes = logspace(logemin,logemax,NumNodes);
 [RHSMatrix, sigma_array] = get_RHS_matrices(energy_nodes,sigma_fname,dxs_fname);
 if flavor ==-3
-    [RHregen,~] = get_RHS_matrices(energy_nodes,sigma_fname,'/tau_decay_spectrum/tbarfull');
+    [RHregen,~] = get_RHS_matrices(energy_nodes,sigma_fname,'../data/tbarfull.dat');
     RHSMatrix = RHSMatrix + RHregen;
 elseif flavor == 3
-    [RHregen,~] = get_RHS_matrices(energy_nodes,sigma_fname,'/tau_decay_spectrum/tfull');
+    [RHregen,~] = get_RHS_matrices(energy_nodes,sigma_fname,'../data/tfull.dat');
     RHSMatrix = RHSMatrix + RHregen;
 end
 
@@ -58,12 +58,11 @@ function  [RHSMatrix, sigma_array] = get_RHS_matrices(energy_nodes,sigma_fname,d
 h5flag = 1; %this flag tells the code to read the HDF5 table, rather than a plain text file. It can be turned off here for legacy/comparison purposes
 NumNodes = length(energy_nodes);
 if h5flag
-    %note the transpose ('): this is due to the way the h5 file is indexed
-    sigma_array = h5read('../data/NuFATECrossSections.h5',sigma_fname)';
-    dsigmady = h5read('../data/NuFATECrossSections.h5', dxs_fname)';    
+    sigma_array = h5read('../data/NuFATECrossSections.h5',['/total_cross_sections/' sigma_fname ]);
+    dsigmady = load('../data/NuFATECrossSections.h5','/differential_cross_sections' dxs_fname);    
 else
-    sigma_array = load(['../data' sigma_fname '.dat']);
-    dsigmady = load(['../data' dxs_fname '.dat']);
+    sigma_array = load(['../data/' sigma_fname '.dat']);
+    dsigmady = load(['../data/' dxs_fname '.dat']);
 end
 DeltaE = diff(log(energy_nodes));
 RHSMatrix = zeros(NumNodes);
