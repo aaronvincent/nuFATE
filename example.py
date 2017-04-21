@@ -5,18 +5,12 @@ import numpy as np
 import cascade as cas
 import earth
 
-#These are made to agree with precomputed cross sections in data/ folder;
-#do not change them without recomputing and retabulating the cross sections
-logemin = 3
-logemax = 10
-NumEnodes = 200
-
 #Choose the flavor & index you want
 flavor = -2  # 1,2,3 = e, mu, tau; negative sign for antiparticles
 gamma = 2.2  # Power law index of isotropic flux E^-gamma
 
 #solve the cascade equation once
-w, v, ci, energy_nodes, phi_0 = cas.get_eigs(flavor, gamma, logemin, logemax, NumEnodes)
+w, v, ci, energy_nodes, phi_0 = cas.get_eigs(flavor, gamma, "./data/NuFATECrossSections.h5")
 
 
 #this function just interpolates the solution
@@ -42,7 +36,7 @@ print "Flux at E  =", E, " GeV , zenith = ", np.degrees(zenith), " degrees will 
 # The next section shows how to include secondary electron, muon neutrinos
 import cascade_secs as csx
 w, v, ci, energy_nodes, phi_0 = csx.get_eigs(
-    flavor, gamma, logemin, logemax, NumEnodes)  #note the extra argument
+    flavor, gamma, "./data/NuFATECrossSections.h5")
 
 
 def get_att_value_secs(w, v, ci, energy_nodes, zenith, E):
