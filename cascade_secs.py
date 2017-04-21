@@ -84,33 +84,33 @@ def get_eigs(flavor, gamma, h5_filename):
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
         phi_0: input spectrum.
     """
-    xsh5 = tables.open(h5_filename,"r")
+    xsh5 = tables.open_file(h5_filename,"r")
 
     if flavor == -1:
-        sigma_array = xsh5.root.total_cross_section.nuebarxs[:]
+        sigma_array = xsh5.root.total_cross_sections.nuebarxs[:]
     elif flavor == -2:
-        sigma_array = xsh5.root.total_cross_section.numubarxs[:]
+        sigma_array = xsh5.root.total_cross_sections.numubarxs[:]
     elif flavor == 1:
-        sigma_array = xsh5.root.total_cross_section.nuexs[:]
+        sigma_array = xsh5.root.total_cross_sections.nuexs[:]
     elif flavor == 2:
-        sigma_array = xsh5.root.total_cross_section.numuxs[:]
+        sigma_array = xsh5.root.total_cross_sections.numuxs[:]
     else:
         raise ValueError("OH NO! You need to specify a flavor that is not tau (= 3 or -3). About to crash because of this.")
 
     if flavor > 0:
         dxs_array = xsh5.root.differential_cross_sections.dxsnu[:]
-        sig3_array = xsh5.root.total_cross_section.nutauxs[:]
+        sig3_array = xsh5.root.total_cross_sections.nutauxs[:]
         sec_array = xsh5.root.tau_decay_spectrum.secfull[:]
         regen_array = xsh5.root.tau_decay_spectrum.tfull[:]
     else:
         dxs_array = xsh5.root.differential_cross_sections.dxsnubar[:]
-        sig3_array = xsh5.root.total_cross_section.nutaubarxs[:]
+        sig3_array = xsh5.root.total_cross_sections.nutaubarxs[:]
         sec_array = xsh5.root.tau_decay_spectrum.secbarfull[:]
         regen_array = xsh5.root.tau_decay_spectrum.tbarfull[:]
 
-    logemax = np.log10(root.total_cross_sections._v_attrs.max_energy)
-    logemin = np.log10(root.total_cross_sections._v_attrs.min_energy)
-    NumNodes = root.total_cross_sections._v_attrs.number_energy_nodes
+    logemax = np.log10(xsh5.root.total_cross_sections._v_attrs.max_energy)
+    logemin = np.log10(xsh5.root.total_cross_sections._v_attrs.min_energy)
+    NumNodes = xsh5.root.total_cross_sections._v_attrs.number_energy_nodes
     energy_nodes = np.logspace(logemin, logemax, NumNodes)
 
     # Note that the solution is scaled by E^2; if you want to modify the incoming spectrum a lot,

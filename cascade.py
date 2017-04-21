@@ -27,7 +27,7 @@ def get_RHS_matrices(energy_nodes, sigma_array, dxs_array):
 
     for i in range(NumNodes):  #E_out
         for j in range(i + 1, NumNodes):  #E_in
-            RHSMatrix[i][j] = DeltaE[j - 1] * dsigmady[j][i] * energy_nodes[
+            RHSMatrix[i][j] = DeltaE[j - 1] * dxs_array[j][i] * energy_nodes[
                 j]**-1 * energy_nodes[i]**2
     return RHSMatrix, sigma_array
 
@@ -52,29 +52,29 @@ def get_eigs(flavor, gamma, h5_filename):
         phi_0: input spectrum.
     """
 
-    xsh5 = tables.open(h5_filename,"r")
+    xsh5 = tables.open_file(h5_filename,"r")
 
     if flavor == -1:
-        sigma_array = xsh5.root.total_cross_section.nuebarxs[:]
+        sigma_array = xsh5.root.total_cross_sections.nuebarxs[:]
     elif flavor == -2:
-        sigma_array = xsh5.root.total_cross_section.numubarxs[:]
+        sigma_array = xsh5.root.total_cross_sections.numubarxs[:]
     elif flavor == -3:
-        sigma_array = xsh5.root.total_cross_section.nutaubarxs[:]
+        sigma_array = xsh5.root.total_cross_sections.nutaubarxs[:]
     elif flavor == 1:
-        sigma_array = xsh5.root.total_cross_section.nuexs[:]
+        sigma_array = xsh5.root.total_cross_sections.nuexs[:]
     elif flavor == 2:
-        sigma_array = xsh5.root.total_cross_section.numuxs[:]
+        sigma_array = xsh5.root.total_cross_sections.numuxs[:]
     elif flavor == 3:
-        sigma_array = xsh5.root.total_cross_section.nutauxs[:]
+        sigma_array = xsh5.root.total_cross_sections.nutauxs[:]
 
     if flavor > 0:
         dxs_array = xsh5.root.differential_cross_sections.dxsnu[:]
     else:
         dxs_array = xsh5.root.differential_cross_sections.dxsnubar[:]
 
-    logemax = np.log10(root.total_cross_sections._v_attrs.max_energy)
-    logemin = np.log10(root.total_cross_sections._v_attrs.min_energy)
-    NumNodes = root.total_cross_sections._v_attrs.number_energy_nodes
+    logemax = np.log10(xsh5.root.total_cross_sections._v_attrs.max_energy)
+    logemin = np.log10(xsh5.root.total_cross_sections._v_attrs.min_energy)
+    NumNodes = xsh5.root.total_cross_sections._v_attrs.number_energy_nodes
     energy_nodes = np.logspace(logemin, logemax, NumNodes)
 
     #Note that the solution is scaled by E^2; if you want to modify the incoming
