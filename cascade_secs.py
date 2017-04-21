@@ -6,15 +6,16 @@ import scipy as sp
 from numpy import linalg as LA
 
 
-def get_RHS_matrices(energy_nodes, sigma_fname, sig3fname, dxs_fname, secname,
-                     regenname):
+def get_RHS_matrices(energy_nodes, sigma_array, sig3_array, dxs_array, sec_array,
+                     regen_array):
     """ Returns the right hand side (RHS) matrices including secondaries.
 
     Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        sigma_fname: cross section table filename.
-        sig3fname: tau neutrino cross section table filename.
-        dxs_fname: differential cross section filename.
+        sigma_fname: one dimensional numpy array with total cross sections in cm^2.
+        sig3fname: tau neutrino cross section array.
+        dxs_fname: differential cross section array.
+        dxs_fname: two dimensional numpy array with the differential cross section cm^2 GeV^-1.
         secname: tau regeneration secondaries into nue or numu tables.
         regenname: tau regeneration secondaries into nutau tables.
 
@@ -23,12 +24,12 @@ def get_RHS_matrices(energy_nodes, sigma_fname, sig3fname, dxs_fname, secname,
                    cross sections in units of cm^2 GeV.
     """
 
-    NumNodes = energy_nodes.shape[0]
-    sigma_array1 = np.loadtxt(sigma_fname)
-    sigma_array2 = np.loadtxt(sig3fname)
-    dsigmady = np.loadtxt(dxs_fname)
-    emuregen = np.loadtxt(secname)
-    tauregen = np.loadtxt(regenname)
+    NumNodes = len(energy_nodes)
+    sigma_array1 = sigma_array
+    sigma_array2 = sig3_array
+    dsigmady = dxs_array
+    emuregen = sec_array
+    tauregen = regen_array
     DeltaE = np.diff(np.log(energy_nodes))
     RHSMatrix1 = np.zeros((NumNodes, NumNodes))
     RHSMatrix2 = np.zeros((NumNodes, NumNodes))
@@ -64,7 +65,7 @@ def get_RHS_matrices(energy_nodes, sigma_fname, sig3fname, dxs_fname, secname,
     return RHSMatrix
 
 
-def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
+def get_eigs(flavor, gamma, h5_filename):
     """ Returns the eigenvalues for a given flavor, spectral index, and energy range.
 
     Args:.
@@ -74,9 +75,7 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
                 2: muon neutrino.
                 The specify flavor cannot be tau, i.e. 3 or -3.
         gamma: spectral index of the initial flux, E^-gamma.
-        logemin: log10 of the lower enegy of interest. Energy in GeV.
-        logemax: log10 of the maximum energy of interest. Energy in GeV.
-        NumNodes: number of energy nodes to use
+        h5_filename: complete path and filename of the h5 object that contains the cross sections.
 
     Returns:
         w: right hand side matrix eigenvalues in unit of cm^2.
@@ -85,34 +84,39 @@ def get_eigs(flavor, gamma=2., logemin=3, logemax=10, NumNodes=200):
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
         phi_0: input spectrum.
     """
+    xsh5 = tables.open(h5_filename,"r")
 
     if flavor == -1:
-        sigma_fname = "data/nuebarxs.dat"
+        sigma_array = xsh5.root.total_cross_section.nuebarxs[:]
     elif flavor == -2:
-        sigma_fname = "data/numubarxs.dat"
+        sigma_array = xsh5.root.total_cross_section.numubarxs[:]
     elif flavor == 1:
-        sigma_fname = "data/nuexs.dat"
+        sigma_array = xsh5.root.total_cross_section.nuexs[:]
     elif flavor == 2:
-        sigma_fname = "data/numuxs.dat"
+        sigma_array = xsh5.root.total_cross_section.numuxs[:]
     else:
         raise ValueError("OH NO! You need to specify a flavor that is not tau (= 3 or -3). About to crash because of this.")
 
     if flavor > 0:
-        dxs_fname = "data/dxsnu.dat"
-        sig3fname = "data/nutauxs.dat"
-        secname = "data/secfull.dat"
-        regenname = "data/tfull.dat"
+        dxs_array = xsh5.root.differential_cross_sections.dxsnu[:]
+        sig3_array = xsh5.root.total_cross_section.nutauxs[:]
+        sec_array = xsh5.root.tau_decay_spectrum.secfull[:]
+        regen_array = xsh5.root.tau_decay_spectrum.tfull[:]
     else:
-        dxs_fname = "data/dxsnubar.dat"
-        sig3fname = "data/nutaubarxs.dat"
-        secname = "data/secbarfull.dat"
-        regenname = "data/tbarfull.dat"
+        dxs_array = xsh5.root.differential_cross_sections.dxsnubar[:]
+        sig3_array = xsh5.root.total_cross_section.nutaubarxs[:]
+        sec_array = xsh5.root.tau_decay_spectrum.secbarfull[:]
+        regen_array = xsh5.root.tau_decay_spectrum.tbarfull[:]
+
+    logemax = np.log10(root.total_cross_sections._v_attrs.max_energy)
+    logemin = np.log10(root.total_cross_sections._v_attrs.min_energy)
+    NumNodes = root.total_cross_sections._v_attrs.number_energy_nodes
+    energy_nodes = np.logspace(logemin, logemax, NumNodes)
 
     # Note that the solution is scaled by E^2; if you want to modify the incoming spectrum a lot,
     # you may need to change this here, as well as in the definition of RHS.
-    energy_nodes = np.logspace(logemin, logemax, NumNodes)
-    RHSMatrix = get_RHS_matrices(energy_nodes, sigma_fname, sig3fname,
-                                 dxs_fname, secname, regenname)
+    RHSMatrix = get_RHS_matrices(energy_nodes, sigma_array, sig3_array,
+                                 dxs_array, sec_array, regen_array)
 
     phi_0 = np.hstack((energy_nodes**(2 - gamma), energy_nodes**(2 - gamma)))
     w, v = LA.eig(RHSMatrix)
