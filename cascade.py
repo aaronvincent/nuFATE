@@ -84,12 +84,12 @@ def get_eigs(flavor, gamma, h5_filename):
 
     #tau regenration
     if flavor == -3:
-        RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_fname,
+        RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_array,
                                        xsh5.root.tau_decay_spectrum.tbarfull[:])
         RHSMatrix = RHSMatrix + RHregen
 
     elif flavor == 3:
-        RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_fname,
+        RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_array,
                                        xsh5.root.tau_decay_spectrum.tfull[:])
         RHSMatrix = RHSMatrix + RHregen
 
