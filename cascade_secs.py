@@ -13,16 +13,16 @@ def get_RHS_matrices(energy_nodes, sigma_array, sig3_array, dxs_array, sec_array
 
     Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        sigma_fname: one dimensional numpy array with total cross sections in cm^2.
+        sigma_fname: one dimensional numpy array with total cross sections in cm**2.
         sig3fname: tau neutrino cross section array.
         dxs_fname: differential cross section array.
-        dxs_fname: two dimensional numpy array with the differential cross section cm^2 GeV^-1.
+        dxs_fname: two dimensional numpy array with the differential cross section cm**2 GeV**-1.
         secname: tau regeneration secondaries into nue or numu tables.
         regenname: tau regeneration secondaries into nutau tables.
 
     Returns:
-        RHSMatrix: matrix of size n_nodes*n_nodes containing the E^2 weighted differential
-                   cross sections in units of cm^2 GeV.
+        RHSMatrix: matrix of size n_nodes*n_nodes containing the E**2 weighted differential
+                   cross sections in units of cm**2 GeV.
     """
 
     NumNodes = len(energy_nodes)
@@ -75,11 +75,11 @@ def get_eigs(flavor, gamma, h5_filename):
                 1: electron neutrino,
                 2: muon neutrino.
                 The specify flavor cannot be tau, i.e. 3 or -3.
-        gamma: spectral index of the initial flux, E^-gamma.
+        gamma: spectral index of the initial flux, E**-gamma.
         h5_filename: complete path and filename of the h5 object that contains the cross sections.
 
     Returns:
-        w: right hand side matrix eigenvalues in unit of cm^2.
+        w: right hand side matrix eigenvalues in unit of cm**2.
         v: right hand side matrix normalized eigenvectors.
         ci: coordinates of the input spectrum in the eigensystem basis.
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
@@ -114,10 +114,16 @@ def get_eigs(flavor, gamma, h5_filename):
     NumNodes = xsh5.root.total_cross_sections._v_attrs.number_energy_nodes
     energy_nodes = np.logspace(logemin, logemax, NumNodes)
 
-    # Note that the solution is scaled by E^2; if you want to modify the incoming spectrum a lot,
+    # Note that the solution is scaled by E**2; if you want to modify the incoming spectrum a lot,
     # you may need to change this here, as well as in the definition of RHS.
     RHSMatrix = get_RHS_matrices(energy_nodes, sigma_array, sig3_array,
                                  dxs_array, sec_array, regen_array)
+
+    if flavor == -1: #add glashow pieces
+        glashow_piece = (-np.diag(get_glashow_total(energy_nodes))+ get_glashow_partial(energy_nodes))/2.
+        z = np.zeros((NumNodes, NumNodes))
+        bigG = np.vstack((np.hstack((glashow_piece, z)), np.hstack((z, z))))
+        RHSMatrix = RHSMatrix+bigG
 
     phi_0 = np.hstack((energy_nodes**(2 - gamma), energy_nodes**(2 - gamma)))
     w, v = LA.eig(RHSMatrix)
@@ -133,3 +139,59 @@ def get_eigs(flavor, gamma, h5_filename):
     xsh5.close()
 
     return w, v, ci, energy_nodes, phi_0
+
+def get_glashow_total(energy_nodes):
+    """ Returns the total nubar e --> W cross section
+        
+        Args:
+        energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
+        
+        
+        Returns:
+        total cross section (cm^2)
+    """
+    Enu = energy_nodes
+    GF = 1.16e-5
+    hbarc=1.97e-14
+    GW = 2.085
+    MW = 80.385e0
+    mmu=.106e0
+    me=511.e-6
+    selectron= 2.e0*me*Enu
+    sig = 1.e0/3.e0*GF**2*selectron/np.pi*(1.-(mmu**2-me**2)/selectron)**2/((1.-selectron/MW**2)**2+GW**2/MW**2)*.676/.1057 * hbarc**2
+    return sig
+
+
+
+def get_glashow_partial(energy_nodes):
+    """ Returns the partial d sigma/dE nubar e --> nubar e cross section
+        
+        Args:
+        energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
+        
+        
+        Returns:
+        differential cross section (cm^2/GeV)
+    """
+    [Enuin, Enu] = np.meshgrid(energy_nodes,energy_nodes);
+    y = 1-Enu/Enuin
+    GF = 1.16e-5
+    hbarc=1.97e-14
+    GW = 2.085
+    MW = 80.385
+    MZ = 91.18
+    me=511.e-6
+    s2t = 0.23
+    gL =  s2t-0.5
+    gR = s2t
+    selectron= 2.*me*Enuin
+    den = (1-selectron/MW**2)**2 + GW**2/MW**2
+    t1 = gR**2/(1.+y*selectron/MZ**2)**2
+    t2 = gL/(1.+y*selectron/MZ**2) + (1-selectron/MW**2)/den
+    t3 = GW/MW/den
+    heaviside = np.piecewise(y, [y < 0, y >= 0], [0., 1.])
+    dsig = GF**2*selectron/np.pi*(t1 + (t2**2+t3**2)*(1-y)**2)*hbarc**2*heaviside
+    dsig = dsig/Enuin #dy --> dE
+    return dsig
+
+
