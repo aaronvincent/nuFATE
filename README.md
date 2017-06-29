@@ -1,5 +1,7 @@
 ![nuFATE Logo](/nufate.png)
 
+nuFATE is a code that rapidly calculates the attenuated neutrino flux as a function of energy, neutrino flavor and zenith angle, due to the earth's opacity, for neutrino energies above 1 TeV. The software as implemented employs a user-specified power-law isotropic neutrino flux, the STW105 reference earth model, and neutrino-nucleon cross sections computed with the CT10nlo PDF distribution. The attenuation rates can be used to calculate the upgoing nu and nubar fluxes for high-energy neutrino observatories such as IceCube or ANTARES. 
+
 Prerequisites
 -------------
 
@@ -20,6 +22,8 @@ Example
 The example script is called example.py. To run it do
 
 python example.py
+
+There is also an iPython notebook (notebook.ipnb) which shows some examples, including plots. This requires the "recommended" packages, above.
 
 Citation
 --------
