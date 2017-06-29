@@ -1,5 +1,3 @@
-# nuFATE
-
 ![nuFATE Logo](/nufate.png)
 
 Prerequisites
