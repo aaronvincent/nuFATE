@@ -28,6 +28,8 @@ If you want cite this work, or want to look at further description
 please refer to
 
 High-energy neutrino attenuation in the Earth and its associated uncertainties
+
 Aaron C. Vincent, Carlos A. Arguelles, and A. Kheirandish
+
 arXiv:2017.xxxx
 
