@@ -41,7 +41,8 @@ def get_eigs(flavor, gamma, h5_filename):
                 1: electron neutrino,
                 2: muon neutrino,
                 and 3: tau neutrino.
-        gamma: spectral index of the initial flux, E**-gamma.
+        gamma:  If gamma is a string, this is the path and file name of the input spectrum (e.g. an atmospheric flux)
+                If gamma is a number, it is used as the spectral index of the initial flux, E**-gamma.
         h5_filename: complete path and filename of the h5 object that contains the cross sections.
 
     Returns:
@@ -49,10 +50,12 @@ def get_eigs(flavor, gamma, h5_filename):
         v: right hand side matrix normalized eigenvectors.
         ci: coordinates of the input spectrum in the eigensystem basis.
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        phi_0: input spectrum.
+        phi_0: E^2 * input spectrum.
     """
 
     xsh5 = tables.open_file(h5_filename,"r")
+
+
 
     if flavor == -1:
         sigma_array = xsh5.root.total_cross_sections.nuebarxs[:]
@@ -96,7 +99,15 @@ def get_eigs(flavor, gamma, h5_filename):
         sigma_array = sigma_array + get_glashow_total(energy_nodes)/2
         RHSMatrix = RHSMatrix + get_glashow_partial(energy_nodes)/2
 
-    phi_0 = energy_nodes**(2 - gamma)
+    # Select initial condition: if gamma is string, load file, otherwise use power law E^-gamma
+    if type(gamma) == str:
+        phi_in = np.loadtxt(gamma)
+        if phi_in.size != energy_nodes.size:
+            raise Exception('Input spectrum must have the same size as the energy vector (default 200x1).')
+        phi_0 = energy_nodes**2*phi_in
+    else:
+        phi_0 = energy_nodes**(2 - gamma)
+
     w, v = LA.eig(-np.diag(sigma_array) + RHSMatrix)
     ci = LA.solve(v, phi_0)  # alternative to lstsq solution
     #    ci = LA.lstsq(v,phi_0)[0]

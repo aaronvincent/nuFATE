@@ -75,7 +75,8 @@ def get_eigs(flavor, gamma, h5_filename):
                 1: electron neutrino,
                 2: muon neutrino.
                 The specify flavor cannot be tau, i.e. 3 or -3.
-        gamma: spectral index of the initial flux, E**-gamma.
+        gamma:  If gamma is a string, this is the path and file name of the input spectrum (e.g. an atmospheric flux)
+                If gamma is a number, it is used as the spectral index of the initial flux, E**-gamma.
         h5_filename: complete path and filename of the h5 object that contains the cross sections.
 
     Returns:
@@ -83,7 +84,7 @@ def get_eigs(flavor, gamma, h5_filename):
         v: right hand side matrix normalized eigenvectors.
         ci: coordinates of the input spectrum in the eigensystem basis.
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        phi_0: input spectrum.
+        phi_0: E^2 * input spectrum.
     """
     xsh5 = tables.open_file(h5_filename,"r")
 
@@ -125,7 +126,17 @@ def get_eigs(flavor, gamma, h5_filename):
         bigG = np.vstack((np.hstack((glashow_piece, z)), np.hstack((z, z))))
         RHSMatrix = RHSMatrix+bigG
 
-    phi_0 = np.hstack((energy_nodes**(2 - gamma), energy_nodes**(2 - gamma)))
+    # Select initial condition: if gamma is string, load file, otherwise use power law E^-gamma
+    if type(gamma) == str:
+        phi_in = np.loadtxt(gamma)
+        if phi_in.size != energy_nodes.size:
+            raise Exception("Input spectrum must have the same size as the energy vector (default 200x1).")
+        phi_0 = energy_nodes**2*phi_in
+    else:
+        phi_0 = energy_nodes**(2 - gamma)
+
+
+    phi_0 = np.hstack((phi_0, phi_0))
     w, v = LA.eig(RHSMatrix)
     #if v is singular, then nothing is really happening. This shouldn't occur for standard model
     #    if LA.det(v)<1.e-40:

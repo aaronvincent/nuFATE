@@ -19,11 +19,13 @@ can probably be obtained from your favorite package manager:
 Example
 -------
 
+The one thing to remember is that the solution provided by nuFATE is E^2 * phi
+
 The example script is called example.py. To run it do
 
 python example.py
 
-There is also an iPython notebook (notebook.ipnb) which shows some examples, including plots. This requires the "recommended" packages, above.
+There is also an iPython notebook (notebook.ipnb) which shows some examples, including plots. This requires the "recommended" packages, above. 
 
 Citation
 --------
