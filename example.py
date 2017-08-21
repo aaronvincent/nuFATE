@@ -16,7 +16,7 @@ w, v, ci, energy_nodes, phi_0 = cas.get_eigs(flavor, gamma, "./data/NuFATECrossS
 
 #this function just interpolates the solution
 def get_att_value(w, v, ci, energy_nodes, zenith, E,phi_0):
-    Na = 6.022e23
+    Na = 6.0221415e23
     logE = np.log10(E)
     t = earth.get_t_earth(zenith) * Na
     # g/ cm^2
