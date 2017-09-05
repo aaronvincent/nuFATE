@@ -19,7 +19,7 @@ def rho_earth(theta, x):
     # piecewise polynomial fit to Reference earth model STW105
     # you could also load a Ref earth model if you want.
 
-    r = np.sqrt(REarth**2 + x**2 - 2. * REarth * x * np.cos(theta))
+    r = np.sqrt(REarth**2 + x**2 + 2. * REarth * x * np.cos(theta))
 
     if r < 1221.:
         p1 = -0.0002177
