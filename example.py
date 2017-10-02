@@ -7,8 +7,8 @@ import earth
 
 #Choose the flavor & index you want
 flavor = -2  # 1,2,3 = e, mu, tau; negative sign for antiparticles
-#gamma = 2.2  # Power law index of isotropic flux E^-gamma
-gamma = 'data/phiHG.dat'
+gamma = 2.2  # Power law index of isotropic flux E^-gamma
+#gamma = 'data/phiHG.dat' #This is an example Honda Gaisser atmospheric flux. You can use this or add your own file, being careful to follow the energy spacing
 
 #solve the cascade equation once
 w, v, ci, energy_nodes, phi_0 = cas.get_eigs(flavor, gamma, "./data/NuFATECrossSections.h5")
