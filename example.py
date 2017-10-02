@@ -28,7 +28,7 @@ def get_att_value(w, v, ci, energy_nodes, zenith, E,phi_0):
 #specify a zenith angle and energy you are interested in
 zenith = np.radians(130.) # zenith angle in radians
 E = 100e3  #GeV
-att = get_att_value(w, v, ci, energy_nodes, zenith, E)
+att = get_att_value(w, v, ci, energy_nodes, zenith, E,energy_nodes**-gamma)
 
 print "Flux at E  =", E, " GeV , zenith = ", np.degrees(zenith), " degrees will be attenuated by a factor of ", att
 #done
