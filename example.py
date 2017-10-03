@@ -8,20 +8,20 @@ import earth
 #Choose the flavor & index you want
 flavor = -2  # 1,2,3 = e, mu, tau; negative sign for antiparticles
 gamma = 2.2  # Power law index of isotropic flux E^-gamma
-#gamma = 'data/phiHG.dat' #This is an example Honda Gaisser atmospheric flux. You can use this or add your own file, being careful to follow the energy spacing
+#gamma = 'data/phiHGextrap.dat' #This is an example Honda Gaisser atmospheric flux. You can use this or add your own file, being careful to follow the energy spacing
 
 #solve the cascade equation once
 w, v, ci, energy_nodes, phi_0 = cas.get_eigs(flavor, gamma, "./data/NuFATECrossSections.h5")
 
 
 #this function just interpolates the solution
-def get_att_value(w, v, ci, energy_nodes, zenith, E,phi_0):
+def get_att_value(w, v, ci, energy_nodes, zenith, E,phi_in):
     Na = 6.0221415e23
     logE = np.log10(E)
     t = earth.get_t_earth(zenith) * Na
     # g/ cm^2
     #    phi = np.dot(v,(ci*np.exp(w*t)))*energy_nodes**(-2) #this is the attenuated flux
-    phisol = np.dot(v, (ci * np.exp(w * t))) * energy_nodes**(-2) / phi_0 #this is phi/phi_0, i.e. the relative attenuation
+    phisol = np.dot(v, (ci * np.exp(w * t))) * energy_nodes**(-2) / phi_in #this is phi/phi_inital, i.e. the relative attenuation
     return np.interp(logE, np.log10(energy_nodes), phisol)
 
 
