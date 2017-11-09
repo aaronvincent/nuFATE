@@ -20,6 +20,8 @@ public:
     double* logspace(double min,double max,unsigned int samples);
 
     double* get_RHS_matrices(double dim, double* nodes, std::shared_ptr<double> sigma, double* dxs);
+    
+    double* get_glashow_total(double NumNodes, double* energy_nodes);
 
     get_eigs(int flavor, double gamma, std::string h5_filename);
 
@@ -51,6 +53,8 @@ private:
     double* RHregen_;
     
     double* glashow_total_;
+    
+    double* log_points_;
     
     int newflavor;
 }
