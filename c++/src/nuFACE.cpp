@@ -41,7 +41,7 @@ double* nuFACE::get_glashow_total(double NumNodes, double* energy_nodes){
     double pi = 3.14159265358979323846
     glashow_total_ = (double *)malloc(NumNodes*sizeof(double));
 
-    for(int i=0; i<=NumNodes; i++){
+    for(int i=0; i<NumNodes; i++){
         double x = *(glashow_total_+i);
         *(glashow_total_ +i) = 2.*me*(*(energy_nodes+i));
         *(glashow_total_ +i) = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
@@ -53,15 +53,15 @@ double* nuFACE::get_glashow_total(double NumNodes, double* energy_nodes){
 double* nuFACE::get_RHS_matrices(double NumNodes, double* energy_nodes, std::shared_ptr<double> sigma_array_, double* dxs_array_){
         
         DeltaE_ = (double *)malloc(NumNodes*sizeof(double));
-        for(int i = 0; i <= NumNodes-1;i++){
+        for(int i = 0; i < NumNodes-1;i++){
             *(DeltaE_ + i) = log10(*(energy_nodes+i+1)) - log10(*(energy_nodes+i));
         }
 
         double RHSMatrix[NumNodes][NumNodes] = {};
         
-        for(int i = 0; i <= NumNodes; i++) 
+        for(int i = 0; i < NumNodes; i++) 
         {
-            for(int j= i+1; j <= NumNodes )
+            for(int j= i+1; j < NumNodes )
             {
                 double e1 = 1./ *(energy_nodes+j);
                 double e2 = *(energy_nodes+i) * *(energy_nodes+i);
@@ -159,7 +159,7 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
 
         //Account for tau regeneration/Glashow resonance
 
-        if (flavor = -3){
+        if (flavor == -3){
             std:string grptau = "/tau_decay_spectrum";
             group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
             hsize_t tauarraysize[2];
@@ -169,11 +169,11 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
             tau_array_ = (double *)malloc(dim1*dim2*sizeof(double));
             H5LTread_dataset(group_id, "tbarfull", tau_array_);
             RHregen_ = get_RHS_matrices(NumNodes, energy_nodes, sigma_array_, tau_array_);
-            for (int i = 0; i<=NumNodes; i++){
-                for(int j=0; j<=NumNodes;j++)
+            for (int i = 0; i<NumNodes; i++){
+                for(int j=0; j<NumNodes;j++)
                 *(RHSMatrix_+i*NumNodes+j) = *(RHSMatrix_+i*NumNodes+j) + *(RHregen_+i*NumNodes+j);
             }
-        } else if(flavor = 3){
+        } else if(flavor == 3){
             std:string grptau = "/tau_decay_spectrum";
             group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
             hsize_t tauarraysize[2];
@@ -183,17 +183,47 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
             tau_array_ = (double *)malloc(dim1*dim2*sizeof(double));
             H5LTread_dataset(group_id, "tbarfull", tau_array_);
             RHregen_ = get_RHS_matrices(NumNodes, energy_nodes, sigma_array_, tau_array_);
-            for (int i = 0; i<=NumNodes; i++){
-                for(int j=0; j<=NumNodes;j++)
+            for (int i = 0; i<NumNodes; i++){
+                for(int j=0; j<NumNodes;j++)
                 *(RHSMatrix_+i*NumNodes+j) = *(RHSMatrix_+i*NumNodes+j) + *(RHregen_+i*NumNodes+j);
             }
-        } else if(flavor = -1){
-            glashow_total_ = get_glashow_total(energy_nodes);
-            for (int i = 0; i<=sarraysize[0]; i++){
-                *(sigma_array_+i) = *(sigma_array_+i) +
+        } else if(flavor == -1){
+            double* glashow_total_ = get_glashow_total(energy_nodes);
+            for (int i = 0; i < sarraysize[0]; i++){
+                *(sigma_array_+i) = *(sigma_array_+i) + *(glashow_total_ + i)/2.; 
+                *(RHSMatrix_ +i) = *(RHSMatrix_ +i) + *(glashow_partial_ + i)/2.;
+
             }
         }
-         
+        phi_0_ = (double *)malloc(NumNodes*sizeof(double));
+        for (int i = 0; i < NumNodes; i++){
+            *(phi_0_ + i) = std::pow(*(energy_nodes +i),(2-gamma));
+        }
+        for (int i = 0; i < sarraysize[0]; i++){
+            *(RHSMatrix_+i*sarraysize[0]+i) = *(RHSMatrix_+i*sarraysize[0]+i) + *(sigma_array_+i);    
+        }
+
+        //compute eigenvalues and eigenvectors
+
+        gsl_matrix_view m = gsl_matrix_view_array(RHSMatrix_, NumNodes, NumNodes);
+        gsl_vector *eval = gsl_vector_alloc (NumNodes);
+        gsl_matrix *evec = gsl_matrix_alloc (NumNodes, NumNodes);
+        gsl_eigen_nonsymmv_workspace * w = gsl_eigen_nonsymmv_alloc (NumNodes);
+
+        gsl_eigen_nonsymmv (&m.matrix, eval, evec, w);
+
+        int s;
+        gsl_vector *ci = gsl_vector_alloc(NumNodes);
+        gsl_permutation *p = gsl_permutation_alloc(NumNodes);
+        
+        gsl_linalg_LU_decomp (&m.matrix, p, &s);
+        gsl_linalg_LU_solve (&m.matrix, p, phi_0_, ci);
+
+        //free unneeded memory
+        gsl_permutation_free (p);
+        gsl_eigen_nonsymmv_free (w);
+
+        return eval, evec, ci, energy_nodes, phi_0_;
 }
 
 
