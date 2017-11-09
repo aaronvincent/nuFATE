@@ -27,7 +27,26 @@ double* nuFACE::logspace(double Emin,double Emax,unsigned int div){
         for(unsigned int i=1; i<div-1; i++, EE+=step_log)
             logpoints[i] = exp(EE);
         logpoints[div-1]=Emax;
-        return logpoints;
+        double* logpoints_ = &logpoints[0];
+        return logpoints_;
+}
+
+double* nuFACE::get_glashow_total(double NumNodes, double* energy_nodes){
+    double GF = 1.16e-5
+    double hbarc = 1.97e-14
+    double GW = 2.085
+    double MW = 80.385e0
+    double mmu = 0.106e0
+    double me = 511.e-6
+    double pi = 3.14159265358979323846
+    glashow_total_ = (double *)malloc(NumNodes*sizeof(double));
+
+    for(int i=0; i<=NumNodes; i++){
+        double x = *(glashow_total_+i);
+        *(glashow_total_ +i) = 2.*me*(*(energy_nodes+i));
+        *(glashow_total_ +i) = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
+    }
+    return glashow_total_;
 }
 
 
