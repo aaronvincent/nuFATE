@@ -7,8 +7,8 @@
 #include "H5Fpublic.h"
 
 
-#ifndef NUFATE.H
-#define NUFATE.H
+#ifndef NUFATE_H
+#define NUFATE_H
 
 class nuFACE {
 
@@ -57,4 +57,6 @@ private:
     double* log_points_;
     
     int newflavor;
-}
+};
+
+#endif
