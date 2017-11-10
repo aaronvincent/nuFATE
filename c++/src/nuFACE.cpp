@@ -2,6 +2,7 @@
 
 
 
+
 double nuFACE::readDoubleAttribute(hid_t object, std::string name){
         double target;
         hid_t attribute_id = H5Aopen(object,name.c_str(),H5P_DEFAULT);
@@ -12,7 +13,18 @@ double nuFACE::readDoubleAttribute(hid_t object, std::string name){
         return target;
 }
 
-double* nuFACE::logspace(double Emin,double Emax,unsigned int div){
+unsigned int nuFACE::readUIntAttribute(hid_t object, std::string name){
+  unsigned int target;
+  hid_t attribute_id = H5Aopen(object,name.c_str(),H5P_DEFAULT);
+  herr_t status = H5Aread(attribute_id, H5T_NATIVE_UINT, &target);
+  if(status<0)
+    throw std::runtime_error("Failed to read attribute '"+name+"'");
+  H5Aclose(attribute_id);
+  return target;
+}
+
+
+double* logspace(double Emin,double Emax,unsigned int div){
         if(div==0)
             throw std::length_error("number of samples requested from logspace must be nonzero");
         double logpoints[div];
@@ -27,18 +39,18 @@ double* nuFACE::logspace(double Emin,double Emax,unsigned int div){
         for(unsigned int i=1; i<div-1; i++, EE+=step_log)
             logpoints[i] = exp(EE);
         logpoints[div-1]=Emax;
-        double* logpoints_ = &logpoints[0];
+        double* logpoints_ = logpoints;
         return logpoints_;
 }
 
-double* nuFACE::get_glashow_total(double NumNodes, double* energy_nodes){
-    double GF = 1.16e-5
-    double hbarc = 1.97e-14
-    double GW = 2.085
-    double MW = 80.385e0
-    double mmu = 0.106e0
-    double me = 511.e-6
-    double pi = 3.14159265358979323846
+double* nuFACE::get_glashow_total(unsigned int NumNodes, double* energy_nodes){
+    double GF = 1.16e-5;
+    double hbarc = 1.97e-14;
+    double GW = 2.085;
+    double MW = 80.385e0;
+    double mmu = 0.106e0;
+    double me = 511.e-6;
+    double pi = 3.14159265358979323846;
     glashow_total_ = (double *)malloc(NumNodes*sizeof(double));
 
     for(int i=0; i<NumNodes; i++){
@@ -49,37 +61,38 @@ double* nuFACE::get_glashow_total(double NumNodes, double* energy_nodes){
     return glashow_total_;
 }
 
-
-double* nuFACE::get_RHS_matrices(double NumNodes, double* energy_nodes, std::shared_ptr<double> sigma_array_, double* dxs_array_){
-        
+double* nuFACE::get_RHS_matrices(unsigned int NumNodes, double* energy_nodes, double* sigma_array_, double* dxs_array_){
+        size = NumNodes;
         DeltaE_ = (double *)malloc(NumNodes*sizeof(double));
         for(int i = 0; i < NumNodes-1;i++){
             *(DeltaE_ + i) = log10(*(energy_nodes+i+1)) - log10(*(energy_nodes+i));
         }
 
-        double RHSMatrix[NumNodes][NumNodes] = {};
+        RHSMatrix_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+        
+        //double RHSMatrix[size][size] = {};
         
         for(int i = 0; i < NumNodes; i++) 
         {
-            for(int j= i+1; j < NumNodes )
-            {
+            for(int j= i+1; j < NumNodes; j++){
                 double e1 = 1./ *(energy_nodes+j);
                 double e2 = *(energy_nodes+i) * *(energy_nodes+i);
-                RHSMatrix[i][j] = *(DeltaE_ + j - 1) * *(dxs_array_+j * dxsdim[1]+i) * e1 * e2;
+                *(RHSMatrix_+i*NumNodes+j) = *(DeltaE_ + j - 1) * *(dxs_array_+j * dxsdim[1]+i) * e1 * e2;
             }
         }
 
-        double* RHSMatrix_ = &RHSMatrix[0][0];
+        //double* RHSMatrix_ = &RHSMatrix[0][0];
         return RHSMatrix_;
 }       
 
-nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
+
+nuFACE::get_eigs(int flavor, double gamma, std::string h5_filename) {
 
         newflavor = flavor;
         newgamma = gamma;
         newh5_filename = h5_filename;
 
-        //open h5file containing cross sections
+        //open h5file containing cross sections (xsh5)
 
         hid_t file_id,group_id,root_id;
 
@@ -89,49 +102,46 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
         std::string grptot = "/total_cross_sections";
         std::string grpdiff = "/differential_cross_sections";
         group_id = H5Gopen(root_id, grptot.c_str(), H5P_DEFAULT);
-        
-        //Get energy information
-        double Emin = readDoubleAttribute(group_id, "max_energy")
-        double Emax = readDoubleAttribute(group_id, "min_energy")
-        double NumNodes = readDoubleAttribute(group_id, "number_energy_nodes")
-        energy_nodes = logspace(Emin, Emax, Numnodes)
 
-        //Get sigma_array 
-        
+        double Emin = readDoubleAttribute(group_id, "max_energy");
+        double Emax = readDoubleAttribute(group_id, "min_energy");   
+        unsigned int NumNodes = readUIntAttribute(group_id, "number_energy_nodes");
+        energy_nodes = logspace(Emin, Emax, NumNodes);
+
+
         if (flavor == -1) {
             hsize_t sarraysize[1];
             H5LTget_dataset_info(group_id,"nuebarxs", sarraysize,NULL,NULL);
-            sigma_array_ = std::make_shared<double>(sarraysize[0]); 
+            sigma_array_ = (double *)malloc(sarraysize[0]*sizeof(double)); 
             H5LTread_dataset_double(group_id, "nuebarxs", sigma_array_);
         }  else if (flavor == -2){
             hsize_t sarraysize[1];
             H5LTget_dataset_info(group_id,"numubarxs", sarraysize,NULL,NULL);
-            sigma_array_ = std::make_shared<double>(sarraysize[0]); 
+            sigma_array_ = (double *)malloc(sarraysize[0]*sizeof(double)); 
             H5LTread_dataset_double(group_id, "numubarxs", sigma_array_);
         }  else if (flavor == -3){
             hsize_t sarraysize[1];
             H5LTget_dataset_info(group_id,"nutaubarxs", sarraysize,NULL,NULL);
-            sigma_array_ = std::make_shared<double>(sarraysize[0]); 
+            sigma_array_ = (double *)malloc(sarraysize[0]*sizeof(double));
             H5LTread_dataset_double(group_id, "nutaubarxs", sigma_array_);            
         }  else if (flavor == 1){
             hsize_t sarraysize[1];
             H5LTget_dataset_info(group_id,"nuexs", sarraysize,NULL,NULL);
-            sigma_array_ = std::make_shared<double>(sarraysize[0]); 
+            sigma_array_ = (double *)malloc(sarraysize[0]*sizeof(double));
             H5LTread_dataset_double(group_id, "nuexs", sigma_array_);
         }  else if (flavor == 2){
             hsize_t sarraysize[1];
             H5LTget_dataset_info(group_id,"numuxs", sarraysize,NULL,NULL);
-            sigma_array_ = std::make_shared<double>(sarraysize[0]); 
+            sigma_array_ = (double *)malloc(sarraysize[0]*sizeof(double));
             H5LTread_dataset_double(group_id, "numuxs", sigma_array_);
         }  else if (flavor == 3){
             hsize_t sarraysize[1];
             H5LTget_dataset_info(group_id,"nutauxs", sarraysize,NULL,NULL);
-            sigma_array_ = std::make_shared<double>(sarraysize[0]); 
+            sigma_array_ = (double *)malloc(sarraysize[0]*sizeof(double));
             H5LTread_dataset_double(group_id, "nutauxs", sigma_array_);
         }
             
-        //Get differential cross sections
-        
+
         hsize_t dxarraysize[2];
         group_id = H5Gopen(root_id, grpdiff.c_str(), H5P_DEFAULT);
         
@@ -142,7 +152,7 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
             dxsdim[0] = dxarraysize[0];
             dxsdim[1] = dxarraysize[1];
             dxs_array_ = (double *)malloc(dim1*dim2*sizeof(double));
-            H5LTread_dataset(group_id, "dxsnu", dxs_array_);
+            H5LTread_dataset_double(group_id, "dxsnu", dxs_array_);
         } else {
             H5LTget_dataset_info(group_id,"dxsnubar", dxarraysize,NULL,NULL);
             size_t dim1 = dxarraysize[0];
@@ -150,46 +160,42 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
             dxsdim[0] = dxarraysize[0];
             dxsdim[1] = dxarraysize[1];
             dxs_array_ = (double *)malloc(dim1*dim2*sizeof(double));
-            H5LTread_dataset(group_id, "dxsnu", dxs_array_);
+            H5LTread_dataset_double(group_id, "dxsnu", dxs_array_);
         }
 
-        //Find RHS matrix
-        
         RHSMatrix_ = get_RHS_matrices(NumNodes, energy_nodes, sigma_array_, dxs_array_);
 
-        //Account for tau regeneration/Glashow resonance
-
-        if (flavor == -3){
-            std:string grptau = "/tau_decay_spectrum";
+        if (flavor = -3){
+            std::string grptau = "/tau_decay_spectrum";
             group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
             hsize_t tauarraysize[2];
             H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
             size_t dim1 = tauarraysize[0];
-            size_t dim2 = taurraysize[1];
+            size_t dim2 = tauarraysize[1];
             tau_array_ = (double *)malloc(dim1*dim2*sizeof(double));
-            H5LTread_dataset(group_id, "tbarfull", tau_array_);
+            H5LTread_dataset_double(group_id, "tbarfull", tau_array_);
             RHregen_ = get_RHS_matrices(NumNodes, energy_nodes, sigma_array_, tau_array_);
             for (int i = 0; i<NumNodes; i++){
                 for(int j=0; j<NumNodes;j++)
                 *(RHSMatrix_+i*NumNodes+j) = *(RHSMatrix_+i*NumNodes+j) + *(RHregen_+i*NumNodes+j);
             }
-        } else if(flavor == 3){
-            std:string grptau = "/tau_decay_spectrum";
+        } else if(flavor = 3){
+            std::string grptau = "/tau_decay_spectrum";
             group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
             hsize_t tauarraysize[2];
             H5LTget_dataset_info(group_id,"tfull", tauarraysize,NULL,NULL);
             size_t dim1 = tauarraysize[0];
-            size_t dim2 = taurraysize[1];
+            size_t dim2 = tauarraysize[1];
             tau_array_ = (double *)malloc(dim1*dim2*sizeof(double));
-            H5LTread_dataset(group_id, "tbarfull", tau_array_);
+            H5LTread_dataset_double(group_id, "tbarfull", tau_array_);
             RHregen_ = get_RHS_matrices(NumNodes, energy_nodes, sigma_array_, tau_array_);
             for (int i = 0; i<NumNodes; i++){
                 for(int j=0; j<NumNodes;j++)
                 *(RHSMatrix_+i*NumNodes+j) = *(RHSMatrix_+i*NumNodes+j) + *(RHregen_+i*NumNodes+j);
             }
-        } else if(flavor == -1){
-            double* glashow_total_ = get_glashow_total(energy_nodes);
-            for (int i = 0; i < sarraysize[0]; i++){
+        } else if(flavor = -1){
+            double* glashow_total_ = get_glashow_total(NumNodes,energy_nodes);
+            for (int i = 0; i < NumNodes; i++){
                 *(sigma_array_+i) = *(sigma_array_+i) + *(glashow_total_ + i)/2.; 
                 *(RHSMatrix_ +i) = *(RHSMatrix_ +i) + *(glashow_partial_ + i)/2.;
 
@@ -199,8 +205,8 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
         for (int i = 0; i < NumNodes; i++){
             *(phi_0_ + i) = std::pow(*(energy_nodes +i),(2-gamma));
         }
-        for (int i = 0; i < sarraysize[0]; i++){
-            *(RHSMatrix_+i*sarraysize[0]+i) = *(RHSMatrix_+i*sarraysize[0]+i) + *(sigma_array_+i);    
+        for (int i = 0; i < NumNodes; i++){
+            *(RHSMatrix_+i*NumNodes+i) = *(RHSMatrix_+i*NumNodes+i) + *(sigma_array_+i);    
         }
 
         //compute eigenvalues and eigenvectors
@@ -224,6 +230,9 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
         gsl_eigen_nonsymmv_free (w);
 
         return eval, evec, ci, energy_nodes, phi_0_;
+
+
+
 }
 
 
@@ -235,6 +244,6 @@ double nuFACE::getGamma() const {
     return newgamma;
 }
 
-string nuFACE::getFilename() const {
+std::string nuFACE::getFilename() const {
     return newh5_filename;
 }
