@@ -1,10 +1,16 @@
+#include <vector>
 #include <string>
 #include <math.h>
+#include <cmath>
+#include <memory>
 
 #include "hdf5.h"
 #include "hdf5_hl.h"
 #include "H5Gpublic.h"
 #include "H5Fpublic.h"
+
+#include <gsl/gsl_matrix.h>
+#include <gsl/gsl_vector.h>
 
 
 #ifndef NUFATE_H
@@ -14,16 +20,18 @@ class nuFACE {
 
 public:
 
-
     double readDoubleAttribute(hid_t, std::string);
+
+    unsigned int readUIntAttribute(hid_t, std::string);
 
     double* logspace(double min,double max,unsigned int samples);
 
-    double* get_RHS_matrices(double dim, double* nodes, std::shared_ptr<double> sigma, double* dxs);
-    
-    double* get_glashow_total(double NumNodes, double* energy_nodes);
+    double* get_glashow_total(unsigned int NumNodes, double* energy_nodes);
 
-    get_eigs(int flavor, double gamma, std::string h5_filename);
+    double* get_RHS_matrices(unsigned int NumNodes, double* energy_nodes, double* sigma_array_, double* dxs_array_);
+
+    get_eigs(int, double, std::string);
+
 
     int getFlavor() const;
 
@@ -32,31 +40,22 @@ public:
     std::string getFilename() const;
 
 private:
-
-    //dimensions of differential cross section array
-    double dxsdim[2];
-    //spectral index
+    unsigned int size;
+    int newflavor;
+    int dxsdim[2];
+    double* phi_0_;
     double newgamma;
-    //filename containing cross sections
     std::string newh5_filename;
     double* energy_nodes;
-    std::shared_ptr<double> sigma_array_;
-    //differential cross section 2d array
-    double* dxs_array_;
-    //tau regeneration
+    double* sigma_array_;
+    double* dxs_array_; 
     double* tau_array_;
-    
     double* DeltaE_;
-    
     double* RHSMatrix_;
-    
     double* RHregen_;
-    
     double* glashow_total_;
-    
-    double* log_points_;
-    
-    int newflavor;
+    unsigned int NumNodes;
+
 };
 
 #endif
