@@ -91,9 +91,9 @@ nuFACE::get_eigs(int flavor, double gamma, string h5_filename) {
         group_id = H5Gopen(root_id, grptot.c_str(), H5P_DEFAULT);
         
         //Get energy information
-        double Emin = readDoubleAttribute(group_id, 'max_energy')
-        double Emax = readDoubleAttribute(group_id, 'min_energy')
-        double NumNodes = readDoubleAttribute(group_id, 'number_energy_nodes')
+        double Emin = readDoubleAttribute(group_id, "max_energy")
+        double Emax = readDoubleAttribute(group_id, "min_energy")
+        double NumNodes = readDoubleAttribute(group_id, "number_energy_nodes")
         energy_nodes = logspace(Emin, Emax, Numnodes)
 
         //Get sigma_array 
