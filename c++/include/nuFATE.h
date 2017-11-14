@@ -1,3 +1,4 @@
+#include <vector>
 #include <string>
 #include <math.h>
 #include <cmath>
@@ -10,51 +11,56 @@
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
+#include <gsl/gsl_math.h>
+#include <gsl/gsl_blas.h>
+#include <gsl/gsl_eigen.h>
 
 
 #ifndef NUFATE_H
 #define NUFATE_H
 
+struct _result{
+        std::shared_ptr<double> eval;
+        std::shared_ptr<double> evec;
+        std::shared_ptr<double> ci;
+        std::shared_ptr<double> energy_nodes;
+        std::shared_ptr<double> phi_0_;
+};    
+
+typedef struct _result result;
+
+
 class nuFACE {
 
 public:
-
-    double readDoubleAttribute(hid_t, std::string);
-
-    unsigned int readUIntAttribute(hid_t, std::string);
-
-    double* logspace(double min,double max,unsigned int samples);
-
-    double* get_glashow_total(unsigned int NumNodes, double* energy_nodes);
     
-    double* get_glashow_partial(unsigned int NumNodes, double* energy_nodes);
-
-    double* get_RHS_matrices(unsigned int NumNodes, double* energy_nodes, double* sigma_array_, double* dxs_array_);
-
-    get_eigs(int, double, std::string);
-
-
+    result result1(double* eval, double* evec, double* ci, double* energy_nodes,double*phi_0_);
+    double readDoubleAttribute(hid_t, std::string);
+    unsigned int readUIntAttribute(hid_t, std::string);
+    std::shared_ptr<double> logspace(double min,double max,unsigned int samples);
+    std::shared_ptr<double> get_glashow_total(unsigned int NumNodes, std::shared_ptr<double> energy_nodes);
+    std::shared_ptr<double> get_RHS_matrices(unsigned int NumNodes, std::shared_ptr<double> energy_nodes, std::shared_ptr<double> sigma_array_, std::shared_ptr<double> dxs_array_);
+    result1 get_eigs(int flavor, double gamma, std::string h5_filename);
     int getFlavor() const;
-
     double getGamma() const;
-
     std::string getFilename() const;
 
 private:
     unsigned int size;
     int newflavor;
     int dxsdim[2];
-    double* phi_0_;
+    std::shared_ptr<double> phi_0_;
     double newgamma;
     std::string newh5_filename;
-    double* energy_nodes;
-    double* sigma_array_;
-    double* dxs_array_; 
-    double* tau_array_;
-    double* DeltaE_;
-    double* RHSMatrix_;
-    double* RHregen_;
-    double* glashow_total_;
+    std::shared_ptr<double> energy_nodes;
+    std::shared_ptr<double> logpoints_;
+    std::shared_ptr<double> sigma_array_;
+    std::shared_ptr<double> dxs_array_; 
+    std::shared_ptr<double> tau_array_;
+    std::shared_ptr<double> DeltaE_;
+    std::shared_ptr<double> RHSMatrix_;
+    std::shared_ptr<double> RHregen_;
+    std::shared_ptr<double> glashow_total_;
     unsigned int NumNodes;
 
 };
