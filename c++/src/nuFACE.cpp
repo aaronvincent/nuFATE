@@ -61,6 +61,58 @@ double* nuFACE::get_glashow_total(unsigned int NumNodes, double* energy_nodes){
     return glashow_total_;
 }
 
+double* nuFACE::get_glashow_partial(unsigned int NumNodes, double* energy_nodes){
+
+    Enuin_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    for (int i =0; i<NumNodes;i++){
+        for(int j = 0; j<NumNodes;j++){
+            *(Enuin_+i*NumNodes+j) = *(energy_nodes+i);
+        }
+    }
+
+    Enu_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    for (int i =0; i<NumNodes;i++){
+        for(int j = 0; j<NumNodes;j++){
+            *(Enu_+i*NumNodes+j) = *(energy_nodes+j);
+            *(Enu_+i*NumNodes+j) = 1 - *(Enu_+i*NumNodes+j)/ *(Enuin_+i*NumNodes+j);
+        }
+    }
+
+    double GF = 1.16e-5;
+    double hbarc=1.97e-14;
+    double GW = 2.085;
+    double MW = 80.385;
+    double MZ = 91.18;
+    double me=511.e-6;
+    double s2t = 0.23;
+    double gL =  s2t-0.5;
+    double gR = s2t;
+    double pi = 3.14159265358979323846;
+
+
+    selectron_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    den_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    t1_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    t2_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    t3_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    dsig_ = (double *)malloc(NumNodes*NumNodes*sizeof(double));
+    for (int i =0; i<NumNodes;i++){
+        for(int j = 0; j<NumNodes;j++){
+            *(selectron_+i*NumNodes+j) = 2.*me* *(Enuin_+i*NumNodes+j);
+            *(den_+i*NumNodes+j) = std::pow(1. - *(selectron_+i*NumNodes+j)/std::pow(MW,2),2) + std::pow(GW,2)/std::pow(MW,2);
+            *(t1_+i*NumNodes+j) = std:pow(gR,2)/std::pow((1.+ *(Enu_+i*NumNodes+j)* *(selectron_+i*NumNodes+j)/std:pow(MZ,2)),2);
+            *(t2_+i*NumNodes+j) = gL/(1.+ *(Enu_+i*NumNodes+j)* *(selectron_+i*NumNodes+j)/std:pow(MZ,2)) + (1. - *(selectron_+i*NumNodes+j)/std::pow(MW,2))/ *(den_+i*NumNodes+j);
+            *(t3_+i*NumNodes+j) = GW/MW/ *(den_+i*NumNodes+j);
+            if (*(Enu_+i*NumNodes+j) > 0.){
+                *(dsig_+i*NumNodes+j) = (std::pow(GF,2)* *(selectron_+i*NumNodes+j)/pi*(*(t1_+i*NumNodes+j)+ (std:pow(*(t2_+i*NumNodes+j),2)+std:pow(*(t3_+i*NumNodes+j),2))*std::pow((1-*(Enu_+i*NumNodes+j),2)))*std::pow(hbarc,2))/ *(Enuin_+i*NumNodes+j);
+            } else {
+                *(dsig_+i*NumNodes+j) = 0.;
+            }
+        }
+    }
+    return dsig_;
+}
+
 double* nuFACE::get_RHS_matrices(unsigned int NumNodes, double* energy_nodes, double* sigma_array_, double* dxs_array_){
         size = NumNodes;
         DeltaE_ = (double *)malloc(NumNodes*sizeof(double));
