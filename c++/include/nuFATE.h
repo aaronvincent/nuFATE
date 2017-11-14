@@ -26,6 +26,8 @@ public:
     double* logspace(double min,double max,unsigned int samples);
 
     double* get_glashow_total(unsigned int NumNodes, double* energy_nodes);
+    
+    double* get_glashow_partial(unsigned int NumNodes, double* energy_nodes);
 
     double* get_RHS_matrices(unsigned int NumNodes, double* energy_nodes, double* sigma_array_, double* dxs_array_);
 
