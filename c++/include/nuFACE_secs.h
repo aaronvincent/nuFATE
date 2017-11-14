@@ -37,6 +37,7 @@ public:
     unsigned int readUIntAttribute(hid_t, std::string);
     double* logspace(double min,double max,unsigned int samples);
     double* get_glashow_total(unsigned int NumNodes, double* energy_nodes);
+    double* get_glashow_partial(unsigned int NumNodes, double* energy_nodes);
     double* get_RHS_matrices(unsigned int NumNodes, double* energy_nodes, double* sigma_array_, double* sig3_array_, double* dxs_array_, double* sec_array_, double* regen_array_);
     result get_eigs(int flavor, double gamma, std::string h5_filename);
 
