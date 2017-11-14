@@ -1,7 +1,11 @@
 #include "nuFATE.h"
 
+namespace nufate {
 
+nuFACE::nuFACE(int flavor, double gamma, std::string h5_file):
+  newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5file), GF(1.16e-5) {
 
+};
 
 double nuFACE::readDoubleAttribute(hid_t object, std::string name){
         double target;
@@ -13,7 +17,7 @@ double nuFACE::readDoubleAttribute(hid_t object, std::string name){
         return target;
 }
 
-unsigned int nuFACE::readUIntAttribute(hid_t object, std::string name){
+unsigned int nuFACE::readUIntAttribute(hid_t object, std::string name) const{
   unsigned int target;
   hid_t attribute_id = H5Aopen(object,name.c_str(),H5P_DEFAULT);
   herr_t status = H5Aread(attribute_id, H5T_NATIVE_UINT, &target);
@@ -23,27 +27,26 @@ unsigned int nuFACE::readUIntAttribute(hid_t object, std::string name){
   return target;
 }
 
+std::vector<double> nuFACE::logspace(double Emin,double Emax,unsigned int div) const {
+    if(div==0)
+        throw std::length_error("number of samples requested from logspace must be nonzero");
+    std::vector<double> logpoints(div);
+    double Emin_log,Emax_log;
+    Emin_log = log10(Emin);
+    Emax_log = log10(Emax);
 
-double* logspace(double Emin,double Emax,unsigned int div){
-        if(div==0)
-            throw std::length_error("number of samples requested from logspace must be nonzero");
-        double logpoints[div];
-        double Emin_log,Emax_log;
-        Emin_log = log(Emin);
-        Emax_log = log(Emax);
-        
-        double step_log = (Emax_log - Emin_log)/double(div-1);
-        
-        logpoints[0]=Emin;
-        double EE = Emin_log+step_log;
-        for(unsigned int i=1; i<div-1; i++, EE+=step_log)
-            logpoints[i] = exp(EE);
-        logpoints[div-1]=Emax;
-        double* logpoints_ = logpoints;
-        return logpoints_;
+    double step_log = (Emax_log - Emin_log)/double(div-1);
+
+    logpoints[0]=Emin;
+    double EE = Emin_log+step_log;
+    for(unsigned int i=1; i<div-1; i++, EE+=step_log)
+        logpoints[i] = exp(EE);
+    logpoints[div-1]=Emax;
+
+    return logpoints;
 }
 
-double* nuFACE::get_glashow_total(unsigned int NumNodes, double* energy_nodes){
+void nuFACE::set_glashow_total(unsigned int NumNodes, std::vector<double> energy_nodes){
     double GF = 1.16e-5;
     double hbarc = 1.97e-14;
     double GW = 2.085;
@@ -51,7 +54,8 @@ double* nuFACE::get_glashow_total(unsigned int NumNodes, double* energy_nodes){
     double mmu = 0.106e0;
     double me = 511.e-6;
     double pi = 3.14159265358979323846;
-    glashow_total_ = (double *)malloc(NumNodes*sizeof(double));
+
+    glashow_total_ = std::maked_shared<double>(malloc(NumNodes*sizeof(double)),free);
 
     for(int i=0; i<NumNodes; i++){
         double x = *(glashow_total_+i);
@@ -287,7 +291,6 @@ nuFACE::get_eigs(int flavor, double gamma, std::string h5_filename) {
 
 }
 
-
 int nuFACE::getFlavor() const {
     return newflavor;
 }
@@ -299,3 +302,5 @@ double nuFACE::getGamma() const {
 std::string nuFACE::getFilename() const {
     return newh5_filename;
 }
+
+} // close namespace
