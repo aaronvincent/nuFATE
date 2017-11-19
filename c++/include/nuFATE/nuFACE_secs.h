@@ -14,59 +14,85 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_eigen.h>
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_permutation.h>
 
 #ifndef NUFACE_SECS_H
 #define NUFACE_SECS_H
 
-struct _result{
-        double* eval;
-        double* evec;
-        double* ci;
-        double* energy_nodes;
-        double* phi_0_;
-};    
+namespace nufate {
 
-typedef struct _result result;
+struct Result {
+  double* eval;
+  double* evec;
+  double* ci;
+  std::vector<double> energy_nodes_;
+  std::vector<double> phi_0_;
+};
 
 class nuFACE_secs {
-
-public:
-    
-    result result1(double* eval, double* evec, double* ci, double* energy_nodes,double*phi_0_);
-    double readDoubleAttribute(hid_t, std::string);
-    unsigned int readUIntAttribute(hid_t, std::string);
-    double* logspace(double min,double max,unsigned int samples);
-    double* get_glashow_total(unsigned int NumNodes, double* energy_nodes);
-    double* get_glashow_partial(unsigned int NumNodes, double* energy_nodes);
-    double* get_RHS_matrices(unsigned int NumNodes, double* energy_nodes, double* sigma_array_, double* sig3_array_, double* dxs_array_, double* sec_array_, double* regen_array_);
-    result get_eigs(int flavor, double gamma, std::string h5_filename);
-
+  private:
+    double const GF = 1.16e-5;
+    double const hbarc = 1.97e-14;
+    double const GW = 2.085;
+    double const MW = 80.385e0;
+    double const mmu = 0.106e0;
+    double const me = 511.e-6;
+    double const pi = 3.14159265358979323846;
+    double const MZ = 91.18;
+    double const s2t = 0.23;
+    double const gL =  s2t-0.5;
+    double const gR = s2t;
+  private:
+    int newflavor_;
+    double newgamma_;
+    std::string newh5_filename_;
+  public:
+    nuFACE_secs(int, double, std::string);
+    Result get_eigs();
+    int getFlavor() const;
+    double getGamma() const;
+    std::string getFilename() const;
+  protected:
+    void set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_);
+    void set_glashow_partial(unsigned int NumNodes, std::vector<double> energy_nodes_);
+    void set_RHS_matrices(std::shared_ptr<double> RMatrix_, unsigned int NumNodes_, std::vector<double> energy_nodes_, std::vector<double> sigma_array_, std::vector<double> sig3_array_, std::shared_ptr<double> dxs_array_, std::shared_ptr<double> sec_array_, std::shared_ptr<double> regen_array_);
+    unsigned int readUIntAttribute(hid_t, std::string) const;
+    std::vector<double> logspace(double min,double max,unsigned int samples) const;
+    double readDoubleAttribute(hid_t, std::string) const;
 private:
-
-    unsigned int NumNodes;
-    double* energy_nodes;
-    double* sigma_array_;
-    double* dxs_array_;
-    double* phi_0_;
-    double* sig3_array_;
-    double* sec_array_;
-    double* regen_array_;
-
-    double* RHSMatrix_;
-    double* RHSMatrix1_;
-    double* RHSMatrix2_;
-    double* RHSMatrix3_;
-    double* RHSMatrix4_;
-
-    double* glashow_total_;
-    double* glashow_piece_;
-
-    int newflavor;
-    double newgamma;
-    std::string newh5_filename;
-
-    int dxsdim[2];
+    unsigned int NumNodes_;
+    int rsize_;
+    double Emax_;
+    double Emin_;
+    std::string grptot_;
+    std::string grpdiff_;
+    std::vector<double> energy_nodes_;
+    std::vector<double> sigma_array_;
+    std::vector<double> phi_0_;
+    std::vector<double> DeltaE_;
+    std::vector<double> glashow_total_;
+    std::vector<double> sig3_array_;
+    std::shared_ptr<double> dxs_array_;
+    std::shared_ptr<double> sec_array_;
+    std::shared_ptr<double> regen_array_;
+    std::shared_ptr<double> RHSMatrix_;
+    std::shared_ptr<double> RHSMatrix1_;
+    std::shared_ptr<double> RHSMatrix2_;
+    std::shared_ptr<double> RHSMatrix3_;
+    std::shared_ptr<double> RHSMatrix4_;
+    std::shared_ptr<double> glashow_partial_;
+    std::shared_ptr<double> Enuin_;
+    std::shared_ptr<double> Enu_;
+    std::shared_ptr<double> selectron_;
+    std::shared_ptr<double> den_;
+    std::shared_ptr<double> t1_;
+    std::shared_ptr<double> t2_;
+    std::shared_ptr<double> t3_;
+    int dxsdim_[2];
 
 };
+
+} // close namespace
 
 #endif
