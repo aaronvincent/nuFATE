@@ -70,9 +70,10 @@ std::vector<double> nuFACE_secs::logspace(double Emin,double Emax,unsigned int d
 }
 
 void nuFACE_secs::set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_){
+    double x;
     for(int i=0; i<NumNodes_; i++){
         glashow_total_[i] = 2.*me*energy_nodes_[i];
-        double x = glashow_total_[i];
+        x = glashow_total_[i];
         glashow_total_[i] = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
     }
     return;
