@@ -1,8 +1,8 @@
 #include "nuFATE.h"
 
-namespace nufate {
+namespace nufate{
 
-nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename): newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename) {
+nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename) {
 
     //open h5file containing cross sections (xsh5)
     hid_t file_id,group_id,root_id;
@@ -19,15 +19,15 @@ nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename): newflavor_(fl
     std::vector<double> energy_nodes_(NumNodes_);
     std::vector<double> DeltaE_(NumNodes_);
     std::vector<double> glashow_total_(NumNodes_);
-    glashow_partial_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    RHSMatrix_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    Enuin_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    Enu_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    selectron_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    den_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    t1_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    t2_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    t3_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> glashow_partial_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> RHSMatrix_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> Enuin_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> Enu_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> den_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> selectron_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> t1_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> t2_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> t3_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
 }
 //reads an attribute of type double from h5 object
 double nuFACE::readDoubleAttribute(hid_t object, std::string name) const{
@@ -164,7 +164,7 @@ Result nuFACE::get_eigs() {
         size_t dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        dxs_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> dxs_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
     } else {
         H5LTget_dataset_info(group_id,"dxsnubar", dxarraysize,NULL,NULL);
@@ -172,7 +172,7 @@ Result nuFACE::get_eigs() {
         size_t dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        dxs_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> dxs_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
     }
 
@@ -185,7 +185,7 @@ Result nuFACE::get_eigs() {
         H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
         size_t dim2 = tauarraysize[1];
-        tau_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> tau_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", tau_array_.get());
         set_RHS_matrices(RHregen_, NumNodes_, energy_nodes_, sigma_array_, tau_array_); 
         for (int i = 0; i<NumNodes_; i++){
@@ -199,7 +199,7 @@ Result nuFACE::get_eigs() {
         H5LTget_dataset_info(group_id,"tfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
         size_t dim2 = tauarraysize[1];
-        tau_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> tau_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", tau_array_.get());
         set_RHS_matrices(RHregen_, NumNodes_, energy_nodes_, sigma_array_, tau_array_);
         for (int i = 0; i<NumNodes_; i++){
@@ -209,7 +209,7 @@ Result nuFACE::get_eigs() {
     } else if(newflavor_ = -1){
         set_glashow_total(NumNodes_,energy_nodes_);
         for (int i = 0; i < NumNodes_; i++){
-            sigma_array_[i] = sigma_array_[i] + *(glashow_total_.get() + i)/2.; 
+            sigma_array_[i] = sigma_array_[i] + glashow_total_[i]/2.; 
             *(RHSMatrix_.get() +i) = *(RHSMatrix_.get() +i) + *(glashow_partial_.get() + i)/2.;
 
         }
@@ -265,4 +265,4 @@ std::string nuFACE::getFilename() const {
     return newh5_filename_;
 }
 
-} // close namespace
+} //close namespace
