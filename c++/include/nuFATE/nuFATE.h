@@ -20,7 +20,7 @@
 #ifndef NUFATE_H
 #define NUFATE_H
 
-namespace nufate {
+namespace nufate{
 
 struct Result {
   double* eval;
@@ -86,5 +86,6 @@ class nuFACE {
 
 };
 
+}
 
 #endif
