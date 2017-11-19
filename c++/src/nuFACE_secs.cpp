@@ -18,19 +18,19 @@ nuFACE_secs::nuFACE_secs(int flavor, double gamma, std::string h5_filename) : ne
     std::vector<double> energy_nodes_(NumNodes_);
     std::vector<double> DeltaE_(NumNodes_);
     std::vector<double> glashow_total_(NumNodes_);
-    glashow_partial_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    RHSMatrix_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    RHSMatrix1_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    RHSMatrix2_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    RHSMatrix3_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    RHSMatrix4_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    Enuin_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    Enu_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    selectron_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    den_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    t1_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    t2_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    t3_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> glashow_partial_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> RHSMatrix_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> RHSMatrix1_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> RHSMatrix2_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> RHSMatrix3_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> RHSMatrix4_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> Enuin_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> Enu_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> den_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> selectron_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> t1_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> t2_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    std::shared_ptr<double> t3_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
 }
 
 double nuFACE_secs::readDoubleAttribute(hid_t object, std::string name) const{
@@ -193,7 +193,7 @@ Result nuFACE_secs::get_eigs() {
         dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        dxs_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> dxs_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
         
         std::string grptau = "/tau_decay_spectrum";
@@ -202,11 +202,11 @@ Result nuFACE_secs::get_eigs() {
         H5LTget_dataset_info(group_id,"tfull", tauarraysize,NULL,NULL);
         dim1 = tauarraysize[0];
         dim2 = tauarraysize[1];
-        regen_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> regen_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tfull", regen_array_.get());
         hsize_t secarraysize[2];
         H5LTget_dataset_info(group_id,"secfull", secarraysize,NULL,NULL);
-        sec_array_ = std::make_shared<double>(malloc(secarraysize[0]*secarraysize[1]*sizeof(double)),free);
+        std::shared_ptr<double> sec_array_((double *)malloc(secarraysize[0]*secarraysize[1]*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "secfull", sec_array_.get());
     } else {
         hsize_t sarraysize[1];
@@ -222,7 +222,7 @@ Result nuFACE_secs::get_eigs() {
         dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        dxs_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> dxs_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "dxsnubar", dxs_array_.get());
 
         std::string grptau = "/tau_decay_spectrum";
@@ -231,12 +231,12 @@ Result nuFACE_secs::get_eigs() {
         H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
         dim1 = tauarraysize[0];
         dim2 = tauarraysize[1];
-        regen_array_ = std::make_shared<double>(malloc(dim1*dim2*sizeof(double)),free);
+        std::shared_ptr<double> regen_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", regen_array_.get());
 
         hsize_t secarraysize[2];
         H5LTget_dataset_info(group_id,"secbarfull", secarraysize,NULL,NULL);
-        sec_array_ = std::make_shared<double>(malloc(secarraysize[0]*secarraysize[1]*sizeof(double)),free);
+        std::shared_ptr<double> sec_array_((double *)malloc(secarraysize[0]*secarraysize[1]*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "secbarfull", sec_array_.get());
     }
 
