@@ -4,12 +4,12 @@ namespace nufate{
 
 nuFACE_secs::nuFACE_secs(int flavor, double gamma, std::string h5_filename) : newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename) {
     //open h5file containing cross sections (xsh5)
-    hid_t file_id,group_id,root_id;
-    file_id = H5Fopen(h5_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
-    std::string grptot_ = "/total_cross_sections";
-    std::string grpdiff_ = "/differential_cross_sections";
-    group_id = H5Gopen(root_id, grptot_.c_str(), H5P_DEFAULT);
+    hid_t group_id;
+    file_id_ = H5Fopen(h5_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    root_id_ = H5Gopen(file_id_, "/", H5P_DEFAULT);
+    grptot_ = "/total_cross_sections";
+    grpdiff_ = "/differential_cross_sections";
+    group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
     //assign some important variables
     Emax_ = readDoubleAttribute(group_id, "max_energy");
     Emin_ = readDoubleAttribute(group_id, "min_energy");   
@@ -70,10 +70,9 @@ std::vector<double> nuFACE_secs::logspace(double Emin,double Emax,unsigned int d
 }
 
 void nuFACE_secs::set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_){
-    double x;
     for(int i=0; i<NumNodes_; i++){
         glashow_total_[i] = 2.*me*energy_nodes_[i];
-        x = glashow_total_[i];
+        double x = glashow_total_[i];
         glashow_total_[i] = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
     }
     return;
@@ -152,10 +151,8 @@ void nuFACE_secs::set_RHS_matrices(std::shared_ptr<double> RMatrix_, unsigned in
 
 Result nuFACE_secs::get_eigs() {
 
-    hid_t file_id,group_id,root_id;
-    file_id = H5Fopen(newh5_filename_.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
-    group_id = H5Gopen(root_id, grptot_.c_str(), H5P_DEFAULT);
+    hid_t group_id;
+    group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
     energy_nodes_ = logspace(Emin_, Emax_, NumNodes_);
 
     if (newflavor_ == -1) {
@@ -188,7 +185,7 @@ Result nuFACE_secs::get_eigs() {
         H5LTread_dataset_double(group_id, "nutauxs", sig3_array_.data());
         
         hsize_t dxarraysize[2];
-        group_id = H5Gopen(root_id, grpdiff_.c_str(), H5P_DEFAULT);        
+        group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);        
         H5LTget_dataset_info(group_id,"dxsnu", dxarraysize,NULL,NULL);    
         dim1 = dxarraysize[0];
         dim2 = dxarraysize[1];
@@ -198,7 +195,7 @@ Result nuFACE_secs::get_eigs() {
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
         
         std::string grptau = "/tau_decay_spectrum";
-        group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
+        group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
         H5LTget_dataset_info(group_id,"tfull", tauarraysize,NULL,NULL);
         dim1 = tauarraysize[0];
@@ -217,7 +214,7 @@ Result nuFACE_secs::get_eigs() {
         H5LTread_dataset_double(group_id, "nutaubarxs", sig3_array_.data());
 
         hsize_t dxarraysize[2];
-        group_id = H5Gopen(root_id, grpdiff_.c_str(), H5P_DEFAULT);        
+        group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);        
         H5LTget_dataset_info(group_id,"dxsnubar", dxarraysize,NULL,NULL);
         dim1 = dxarraysize[0];
         dim2 = dxarraysize[1];
@@ -227,7 +224,7 @@ Result nuFACE_secs::get_eigs() {
         H5LTread_dataset_double(group_id, "dxsnubar", dxs_array_.get());
 
         std::string grptau = "/tau_decay_spectrum";
-        group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
+        group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
         H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
         dim1 = tauarraysize[0];
