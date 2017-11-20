@@ -61,6 +61,10 @@ class nuFACE_secs {
     std::vector<double> logspace(double min,double max,unsigned int samples) const;
     double readDoubleAttribute(hid_t, std::string) const;
 private:
+    hid_t file_id_;
+    hid_t root_id_;
+    std::string grpdiff_;
+    std::string grptot_;
     unsigned int NumNodes_;
     int rsize_;
     double Emax_;
