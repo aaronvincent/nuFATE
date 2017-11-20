@@ -6,11 +6,11 @@ nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
 
     //open h5file containing cross sections (xsh5)
     hid_t file_id,group_id,root_id;
-    file_id = H5Fopen(h5_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
-    std::string grptot = "/total_cross_sections";
-    std::string grpdiff = "/differential_cross_sections";
-    group_id = H5Gopen(root_id, grptot.c_str(), H5P_DEFAULT);
+    file_id_ = H5Fopen(h5_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    root_id_ = H5Gopen(file_id, "/", H5P_DEFAULT);
+    grptot_ = "/total_cross_sections";
+    grpdiff_ = "/differential_cross_sections";
+    group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
     //assign some important variables
     Emax_ = readDoubleAttribute(group_id, "max_energy");
     Emin_ = readDoubleAttribute(group_id, "min_energy");   
@@ -115,12 +115,12 @@ void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix_, unsigned int Num
 
 Result nuFACE::get_eigs() {
 
-    hid_t file_id,group_id,root_id;
-    file_id = H5Fopen(newh5_filename_.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
+    hid_t group_id;
+    //file_id = H5Fopen(newh5_filename_.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    //root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
+    //std::string grptot = "/total_cross_sections";
     energy_nodes_ = logspace(Emin_, Emax_, NumNodes_);
-    std::string grptot = "/total_cross_sections";
-    group_id = H5Gopen(root_id, grptot.c_str(), H5P_DEFAULT);
+    group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
 
     if (newflavor_ == -1) {
         hsize_t sarraysize[1];
@@ -156,7 +156,7 @@ Result nuFACE::get_eigs() {
         
 
     hsize_t dxarraysize[2];
-    group_id = H5Gopen(root_id, grpdiff.c_str(), H5P_DEFAULT);
+    group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);
     
     if (newflavor_ > 0){
         H5LTget_dataset_info(group_id,"dxsnu", dxarraysize,NULL,NULL);    
@@ -180,7 +180,7 @@ Result nuFACE::get_eigs() {
 
     if (newflavor_ = -3){
         std::string grptau = "/tau_decay_spectrum";
-        group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
+        group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
         H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
@@ -194,7 +194,7 @@ Result nuFACE::get_eigs() {
         }
     } else if(newflavor_ = 3){
         std::string grptau = "/tau_decay_spectrum";
-        group_id = H5Gopen(root_id, grptau.c_str(), H5P_DEFAULT);
+        group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
         H5LTget_dataset_info(group_id,"tfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
