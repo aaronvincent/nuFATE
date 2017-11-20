@@ -61,7 +61,10 @@ class nuFACE {
     unsigned int readUIntAttribute(hid_t, std::string) const;
     std::vector<double> logspace(double min,double max,unsigned int samples) const;
   private:
-    std::string grpdiff;
+    std::string grpdiff_;
+    std::string grptot_;
+    hid_t file_id_;
+    hid_t root_id_;
     unsigned int NumNodes_;
     double Emax_;
     double Emin_;
