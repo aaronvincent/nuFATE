@@ -15,18 +15,18 @@ nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     Emin_ = readDoubleAttribute(group_id, "min_energy");
     NumNodes_ = readUIntAttribute(group_id, "number_energy_nodes");
     //allocate memory that will be used in functions below
-    std::vector<double> energy_nodes_(NumNodes_);
-    std::vector<double> DeltaE_(NumNodes_);
-    std::vector<double> glashow_total_(NumNodes_);
-    std::shared_ptr<double> glashow_partial_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> RHSMatrix_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> Enuin_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> Enu_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> den_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> selectron_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> t1_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> t2_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    std::shared_ptr<double> t3_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    energy_nodes_.resize(NumNodes_);
+    DeltaE_ = std::vector<double>(NumNodes_);
+    glashow_total_ = std::vector<double>(NumNodes_);
+    glashow_partial_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    RHSMatrix_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    Enuin_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    Enu_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    den_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    selectron_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    t1_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    t2_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    t3_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
 }
 
 //reads an attribute of type double from h5 object
@@ -65,6 +65,7 @@ std::vector<double> nuFACE::logspace(double Emin,double Emax,unsigned int div) c
     logpoints[div-1]=Emax;
     return logpoints;
 }
+
 //sets the contribution from glashow 
 void nuFACE::set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_){
     for(int i=0; i<NumNodes_; i++){
@@ -96,12 +97,10 @@ void nuFACE::set_glashow_partial(unsigned int NumNodes_, std::vector<double> ene
     return;
 }
 
-void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix_, unsigned int NumNodes, std::vector<double> energy_nodes_, std::vector<double> sigma_array_, std::shared_ptr<double> dxs_array_){
-    
+void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix){
     for(int i = 0; i < NumNodes_-1;i++){
         DeltaE_[i] = log10(energy_nodes_[i+1]) - log10(energy_nodes_[i]);
     }
-    //RHSMatrix_ = std::make_shared<double>(malloc(NumNodes_*NumNodes_*sizeof(double)),free); 
     for(int i = 0; i < NumNodes_; i++) 
     {
         for(int j= i+1; j < NumNodes_; j++){
@@ -111,7 +110,7 @@ void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix_, unsigned int Num
         }
     }
     return;
-} 
+}
 
 Result nuFACE::get_eigs() {
 
