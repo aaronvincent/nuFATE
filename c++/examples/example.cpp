@@ -4,7 +4,7 @@
 int main(){
     int flavor = -1;
     double gamma = 2.2;
-    std::string file = "../../data/NuFATECrossSections.h5";
+    std::string file = "./NuFATECrossSections.h5";
     nufate::nuFACE object(flavor, gamma, file);
 
     nufate::Result result;
