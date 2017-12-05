@@ -62,7 +62,7 @@ build/%.o : src/%.cpp
 	@$(CXX) $(CXXFLAGS) -c $(CFLAGS) $< -o $@
 
 examples/example: $(DYN_PRODUCT) examples/example.cpp
-	@echo Compatible example
+	@echo Compiling example
 	@$(CXX) $(EXMAPLES_FLAGS) examples/example.cpp -lnuFATE $(LDFLAGS) -o $@
 
 .PHONY: install uninstall clean test docs
@@ -75,9 +75,6 @@ doxygen:
 	@doxygen src/doxyfile
 docs:
 	@doxygen src/doxyfile
-
-test: $(DYN_PRODUCT) $(STAT_PRODUCT)
-	@cd ./test ; ./run_tests
 
 install: $(DYN_PRODUCT) $(STAT_PRODUCT)
 	@echo Installing headers in $(PREFIX)/include/nuFATE

@@ -53,6 +53,7 @@ class nuFACE {
     int getFlavor() const;
     double getGamma() const;
     std::string getFilename() const;
+    double getNumNodes() const;
   protected:
     void set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_);
     void set_glashow_partial(unsigned int NumNodes_, std::vector<double> energy_nodes_);

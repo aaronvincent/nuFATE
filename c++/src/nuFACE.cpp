@@ -265,4 +265,8 @@ std::string nuFACE::getFilename() const {
     return newh5_filename_;
 }
 
+double nuFACE::getNumNodes() const {
+    return NumNodes_;
+}
+
 } //close namespace
