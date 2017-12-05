@@ -30,13 +30,13 @@ GSL_LDFLAGS=-L/usr/local/Cellar/gsl/2.4/lib -lgsl -lgslcblas -lm
 HDF5_CFLAGS=-I/usr/local/Cellar/hdf5/1.10.1_1/lib/../include
 HDF5_LDFLAGS=-L/usr/local/Cellar/hdf5/1.10.1_1/lib -lhdf5_hl -lhdf5 -L/usr/local/opt/szip/lib -lsz -lz -ldl -lm
 
-INCnuFATE=$(PATH_nuFATE)/include/nuFATE
+INCnuFATE=$(PATH_nuFATE)/include
 LIBnuFATE=$(PATH_nuFATE)/lib
 
 # FLAGS
-CFLAGS= -O3 -fPIC -I$(INCnuFATE) $(GSL_CFLAGS) $(HDF5_CFLAGS)
+CFLAGS= -O3 -fPIC -I$(INCnuFATE)/nuFATE $(GSL_CFLAGS) $(HDF5_CFLAGS)
 LDFLAGS= -Wl,-rpath -Wl,$(LIBnuFATE) -L$(LIBnuFATE)
-LDFLAGS+= $(SQUIDS_LDFLAGS) $(GSL_LDFLAGS) $(HDF5_LDFLAGS)
+LDFLAGS+= $(GSL_LDFLAGS) $(HDF5_LDFLAGS)
 EXMAPLES_FLAGS=-I$(INCnuFATE) $(CXXFLAGS) $(CFLAGS)
 
 # Project files
@@ -68,8 +68,8 @@ examples/example: $(DYN_PRODUCT) examples/example.cpp
 .PHONY: install uninstall clean test docs
 clean:
 	@echo Erasing generated files
-	@rm -f $(PATH_nuSQUIDS)/build/*.o
-	@rm -f $(PATH_nuSQUIDS)/$(STAT_PRODUCT) $(PATH_nuSQUIDS)/$(DYN_PRODUCT)
+	@rm -f $(PATH_nuFATE)/build/*.o
+	@rm -f $(PATH_nuFATE)/$(STAT_PRODUCT) $(PATH_nuFATE)/$(DYN_PRODUCT)
 
 doxygen:
 	@doxygen src/doxyfile
@@ -79,7 +79,7 @@ docs:
 install: $(DYN_PRODUCT) $(STAT_PRODUCT)
 	@echo Installing headers in $(PREFIX)/include/nuFATE
 	@mkdir -p $(PREFIX)/include/nuFATE
-	@cp $(INCnuSQUIDS)/nuFATE/*.h $(PREFIX)/include/nuFATE
+	@cp $(INCnuFATE)/nuFATE/*.h $(PREFIX)/include/nuFATE
 	@echo Installing libraries in $(PREFIX)/lib
 	@mkdir -p $(PREFIX)/lib
 	@cp $(DYN_PRODUCT) $(STAT_PRODUCT) $(PREFIX)/lib
