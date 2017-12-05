@@ -178,7 +178,7 @@ Result nuFACE::get_eigs() {
 
     set_RHS_matrices(RHSMatrix_, NumNodes_, energy_nodes_, sigma_array_, dxs_array_);
 
-    if (newflavor_ = -3){
+    if (newflavor_ == -3){
         std::string grptau = "/tau_decay_spectrum";
         group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
@@ -192,7 +192,7 @@ Result nuFACE::get_eigs() {
             for(int j=0; j<NumNodes_;j++)
             *(RHSMatrix_.get()+i*NumNodes_+j) = *(RHSMatrix_.get()+i*NumNodes_+j) + *(RHregen_.get()+i*NumNodes_+j);
         }
-    } else if(newflavor_ = 3){
+    } else if(newflavor_ == 3){
         std::string grptau = "/tau_decay_spectrum";
         group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
@@ -206,7 +206,7 @@ Result nuFACE::get_eigs() {
             for(int j=0; j<NumNodes_;j++)
             *(RHSMatrix_.get()+i*NumNodes_+j) = *(RHSMatrix_.get()+i*NumNodes_+j) + *(RHregen_.get()+i*NumNodes_+j);
         }
-    } else if(newflavor_ = -1){
+    } else if(newflavor_ == -1){
         set_glashow_total(NumNodes_,energy_nodes_);
         for (int i = 0; i < NumNodes_; i++){
             sigma_array_[i] = sigma_array_[i] + glashow_total_[i]/2.; 

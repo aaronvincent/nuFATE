@@ -69,8 +69,6 @@ private:
     int rsize_;
     double Emax_;
     double Emin_;
-    std::string grptot_;
-    std::string grpdiff_;
     std::vector<double> energy_nodes_;
     std::vector<double> sigma_array_;
     std::vector<double> phi_0_;
@@ -94,7 +92,6 @@ private:
     std::shared_ptr<double> t2_;
     std::shared_ptr<double> t3_;
     int dxsdim_[2];
-
 };
 
 } // close namespace
