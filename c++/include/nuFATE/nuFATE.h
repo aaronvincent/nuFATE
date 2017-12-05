@@ -32,17 +32,17 @@ struct Result {
 
 class nuFACE {
   private:
-    double const GF = 1.16e-5;
-    double const hbarc = 1.97e-14;
-    double const GW = 2.085;
-    double const MW = 80.385e0;
-    double const mmu = 0.106e0;
-    double const me = 511.e-6;
-    double const pi = 3.14159265358979323846;
-    double const MZ = 91.18;
-    double const s2t = 0.23;
-    double const gL =  s2t-0.5;
-    double const gR = s2t;
+    const double GF = 1.16e-5;
+    const double hbarc = 1.97e-14;
+    const double GW = 2.085;
+    const double MW = 80.385e0;
+    const double mmu = 0.106e0;
+    const double me = 511.e-6;
+    const double pi = 3.14159265358979323846;
+    const double MZ = 91.18;
+    const double s2t = 0.23;
+    const double gL =  s2t-0.5;
+    const double gR = s2t;
   private:
     int newflavor_;
     double newgamma_;

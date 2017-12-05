@@ -21,7 +21,7 @@ OBJECTS = $(patsubst src/%.cpp,build/%.o,$(SOURCES))
 
 EXAMPLES := examples/example
 
-CXXFLAGS= -std=c++11 -g
+CXXFLAGS= -std=c++11 -g -Wall -Wextra -Wshadow -Werror
 
 # Directories
 

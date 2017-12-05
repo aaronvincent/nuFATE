@@ -5,15 +5,14 @@ namespace nufate{
 nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename) {
 
     //open h5file containing cross sections (xsh5)
-    hid_t file_id,group_id,root_id;
     file_id_ = H5Fopen(h5_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    root_id_ = H5Gopen(file_id, "/", H5P_DEFAULT);
+    root_id_ = H5Gopen(file_id_, "/", H5P_DEFAULT);
     grptot_ = "/total_cross_sections";
     grpdiff_ = "/differential_cross_sections";
-    group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
+    hid_t group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
     //assign some important variables
     Emax_ = readDoubleAttribute(group_id, "max_energy");
-    Emin_ = readDoubleAttribute(group_id, "min_energy");   
+    Emin_ = readDoubleAttribute(group_id, "min_energy");
     NumNodes_ = readUIntAttribute(group_id, "number_energy_nodes");
     //allocate memory that will be used in functions below
     std::vector<double> energy_nodes_(NumNodes_);
@@ -29,6 +28,7 @@ nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     std::shared_ptr<double> t2_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     std::shared_ptr<double> t3_((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
 }
+
 //reads an attribute of type double from h5 object
 double nuFACE::readDoubleAttribute(hid_t object, std::string name) const{
     double target;
