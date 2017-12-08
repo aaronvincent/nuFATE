@@ -1,5 +1,5 @@
 #include "nuFATE.h"
-
+#include <iostream>
 namespace nufate{
 
 nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename) {
@@ -28,11 +28,15 @@ nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     t2_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     t3_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     //set energy nodes and deltaE
-    energy_nodes_ = logspace(Emin_, Emax_, NumNodes_); 
+    energy_nodes_ = logspace(Emin_, Emax_, NumNodes_);
+//    for(unsigned int i = 0; i < NumNodes_;i++){
+ //       std::cout << energy_nodes_[i] << std::endl; 
+//    }
     for(unsigned int i = 0; i < NumNodes_-1;i++){
-        DeltaE_[i] = log10(energy_nodes_[i+1]) - log10(energy_nodes_[i]);
+        DeltaE_[i] = log(energy_nodes_[i+1]) - log(energy_nodes_[i]);
+//        std::cout <<  DeltaE_[i] << std::endl;
     }
-   
+
 }
 
 //reads an attribute of type double from h5 object
@@ -67,7 +71,7 @@ std::vector<double> nuFACE::logspace(double Emin,double Emax,unsigned int div) c
     logpoints[0]=Emin;
     double EE = Emin_log+step_log;
     for(unsigned int i=1; i<div-1; i++, EE+=step_log)
-        logpoints[i] = exp(EE);
+        logpoints[i] = std::pow(10,EE);
     logpoints[div-1]=Emax;
     return logpoints;
 }
@@ -78,6 +82,7 @@ void nuFACE::set_glashow_total(){
         glashow_total_[i] = 2.*me*energy_nodes_[i];
         double x = glashow_total_[i];
         glashow_total_[i] = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
+        std::cout << glashow_total_[i] << std::endl;
     }
     return;
 }
@@ -132,18 +137,19 @@ Result nuFACE::get_eigs() {
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"numubarxs", sarraysize,NULL,NULL);
         sigma_array_ = std::vector<double>(sarraysize[0]);
-        H5LTread_dataset_double(group_id, "nuebarxs", sigma_array_.data());
         H5LTread_dataset_double(group_id, "numubarxs", sigma_array_.data());
+        for(unsigned long i = 0; i<sigma_array_.size();i++){
+           std::cout << sigma_array_[i] << std::endl;
+        }
     }  else if (newflavor_ == -3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutaubarxs", sarraysize,NULL,NULL);
         sigma_array_ = std::vector<double>(sarraysize[0]);
-        H5LTread_dataset_double(group_id, "nuebarxs", sigma_array_.data());
-        H5LTread_dataset_double(group_id, "nutaubarxs", sigma_array_.data());            
+        H5LTread_dataset_double(group_id, "nutaubarxs", sigma_array_.data());
     }  else if (newflavor_ == 1){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nuexs", sarraysize,NULL,NULL);
-        sigma_array_ = std::vector<double>(sarraysize[0]);    
+        sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "nuexs", sigma_array_.data());
     }  else if (newflavor_ == 2){
         hsize_t sarraysize[1];
@@ -180,7 +186,6 @@ Result nuFACE::get_eigs() {
     }
 
     set_RHS_matrices(RHSMatrix_, dxs_array_);
-
     if (newflavor_ == -3){
         std::string grptau = "/tau_decay_spectrum";
         group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
@@ -224,6 +229,12 @@ Result nuFACE::get_eigs() {
     for (unsigned int i = 0; i < NumNodes_; i++){
         *(RHSMatrix_.get()+i*NumNodes_+i) = *(RHSMatrix_.get()+i*NumNodes_+i) + sigma_array_[i];    
     }
+//    
+//    for(unsigned int i=0;i<NumNodes_;i++){
+//      for(unsigned int j=0;j<NumNodes_;j++){
+//        std::cout << *(RHSMatrix_.get()+i * NumNodes_+j) << std::endl;
+//     }
+//    }
 
     //compute eigenvalues and eigenvectors
 
