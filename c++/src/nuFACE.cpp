@@ -27,6 +27,12 @@ nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     t1_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     t2_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     t3_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    //set energy nodes and deltaE
+    energy_nodes_ = logspace(Emin_, Emax_, NumNodes_); 
+    for(unsigned int i = 0; i < NumNodes_-1;i++){
+        DeltaE_[i] = log10(energy_nodes_[i+1]) - log10(energy_nodes_[i]);
+    }
+   
 }
 
 //reads an attribute of type double from h5 object
@@ -67,8 +73,8 @@ std::vector<double> nuFACE::logspace(double Emin,double Emax,unsigned int div) c
 }
 
 //sets the contribution from glashow 
-void nuFACE::set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_){
-    for(int i=0; i<NumNodes_; i++){
+void nuFACE::set_glashow_total(){
+    for(unsigned int i=0; i<NumNodes_; i++){
         glashow_total_[i] = 2.*me*energy_nodes_[i];
         double x = glashow_total_[i];
         glashow_total_[i] = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
@@ -76,9 +82,9 @@ void nuFACE::set_glashow_total(unsigned int NumNodes_, std::vector<double> energ
     return;
 }
 
-void nuFACE::set_glashow_partial(unsigned int NumNodes_, std::vector<double> energy_nodes_){
-    for (int i =0; i<NumNodes_;i++){
-        for(int j = 0; j<NumNodes_;j++){
+void nuFACE::set_glashow_partial(){
+    for (unsigned int i =0; i<NumNodes_;i++){
+        for(unsigned int j = 0; j<NumNodes_;j++){
             *(Enuin_.get()+i*NumNodes_+j) = energy_nodes_[i];
             *(Enu_.get()+i*NumNodes_+j) = energy_nodes_[j];
             *(Enu_.get()+i*NumNodes_+j) = 1 - *(Enu_.get()+i*NumNodes_+j)/ *(Enuin_.get()+i*NumNodes_+j);
@@ -97,16 +103,13 @@ void nuFACE::set_glashow_partial(unsigned int NumNodes_, std::vector<double> ene
     return;
 }
 
-void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix){
-    for(int i = 0; i < NumNodes_-1;i++){
-        DeltaE_[i] = log10(energy_nodes_[i+1]) - log10(energy_nodes_[i]);
-    }
-    for(int i = 0; i < NumNodes_; i++) 
+void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<double> dxsarray) const{
+    for(unsigned int i = 0; i < NumNodes_; i++) 
     {
-        for(int j= i+1; j < NumNodes_; j++){
+        for(unsigned int j= i+1; j < NumNodes_; j++){
             double e1 = 1./ energy_nodes_[j];
             double e2 = energy_nodes_[i] * energy_nodes_[i];
-            *(RMatrix_.get()+i*NumNodes_+j) = DeltaE_[j - 1] * *(dxs_array_.get()+j * dxsdim_[1]+i) * e1 * e2;
+            *(RMatrix.get()+i*NumNodes_+j) = DeltaE_[j - 1] * *(dxsarray.get()+j * dxsdim_[1]+i) * e1 * e2;
         }
     }
     return;
@@ -118,38 +121,39 @@ Result nuFACE::get_eigs() {
     //file_id = H5Fopen(newh5_filename_.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     //root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
     //std::string grptot = "/total_cross_sections";
-    energy_nodes_ = logspace(Emin_, Emax_, NumNodes_);
     group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
 
     if (newflavor_ == -1) {
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nuebarxs", sarraysize,NULL,NULL);
-        std::vector<double> sigma_array_(sarraysize[0]);
+        sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "nuebarxs", sigma_array_.data());
     }  else if (newflavor_ == -2){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"numubarxs", sarraysize,NULL,NULL);
-        std::vector<double> sigma_array_(sarraysize[0]);
+        sigma_array_ = std::vector<double>(sarraysize[0]);
+        H5LTread_dataset_double(group_id, "nuebarxs", sigma_array_.data());
         H5LTread_dataset_double(group_id, "numubarxs", sigma_array_.data());
     }  else if (newflavor_ == -3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutaubarxs", sarraysize,NULL,NULL);
-        std::vector<double> sigma_array_(sarraysize[0]);
+        sigma_array_ = std::vector<double>(sarraysize[0]);
+        H5LTread_dataset_double(group_id, "nuebarxs", sigma_array_.data());
         H5LTread_dataset_double(group_id, "nutaubarxs", sigma_array_.data());            
     }  else if (newflavor_ == 1){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nuexs", sarraysize,NULL,NULL);
-        std::vector<double> sigma_array_(sarraysize[0]);
+        sigma_array_ = std::vector<double>(sarraysize[0]);    
         H5LTread_dataset_double(group_id, "nuexs", sigma_array_.data());
     }  else if (newflavor_ == 2){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"numuxs", sarraysize,NULL,NULL);
-        std::vector<double> sigma_array_(sarraysize[0]);
+	sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "numuxs", sigma_array_.data());
     }  else if (newflavor_ == 3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutauxs", sarraysize,NULL,NULL);
-        std::vector<double> sigma_array_(sarraysize[0]);
+ 	sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "nutauxs", sigma_array_.data());
     }
         
@@ -163,7 +167,7 @@ Result nuFACE::get_eigs() {
         size_t dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        std::shared_ptr<double> dxs_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
+        dxs_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
     } else {
         H5LTget_dataset_info(group_id,"dxsnubar", dxarraysize,NULL,NULL);
@@ -171,11 +175,11 @@ Result nuFACE::get_eigs() {
         size_t dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        std::shared_ptr<double> dxs_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
+        dxs_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
     }
 
-    set_RHS_matrices(RHSMatrix_, NumNodes_, energy_nodes_, sigma_array_, dxs_array_);
+    set_RHS_matrices(RHSMatrix_, dxs_array_);
 
     if (newflavor_ == -3){
         std::string grptau = "/tau_decay_spectrum";
@@ -184,11 +188,11 @@ Result nuFACE::get_eigs() {
         H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
         size_t dim2 = tauarraysize[1];
-        std::shared_ptr<double> tau_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
+        tau_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", tau_array_.get());
-        set_RHS_matrices(RHregen_, NumNodes_, energy_nodes_, sigma_array_, tau_array_); 
-        for (int i = 0; i<NumNodes_; i++){
-            for(int j=0; j<NumNodes_;j++)
+        set_RHS_matrices(RHregen_, tau_array_); 
+        for (unsigned int i = 0; i<NumNodes_; i++){
+            for(unsigned int j=0; j<NumNodes_;j++)
             *(RHSMatrix_.get()+i*NumNodes_+j) = *(RHSMatrix_.get()+i*NumNodes_+j) + *(RHregen_.get()+i*NumNodes_+j);
         }
     } else if(newflavor_ == 3){
@@ -198,26 +202,26 @@ Result nuFACE::get_eigs() {
         H5LTget_dataset_info(group_id,"tfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
         size_t dim2 = tauarraysize[1];
-        std::shared_ptr<double> tau_array_((double *)malloc(dim1*dim2*sizeof(double)),free);
+        tau_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", tau_array_.get());
-        set_RHS_matrices(RHregen_, NumNodes_, energy_nodes_, sigma_array_, tau_array_);
-        for (int i = 0; i<NumNodes_; i++){
-            for(int j=0; j<NumNodes_;j++)
+        set_RHS_matrices(RHregen_, tau_array_);
+        for (unsigned int i = 0; i<NumNodes_; i++){
+            for(unsigned int j=0; j<NumNodes_;j++)
             *(RHSMatrix_.get()+i*NumNodes_+j) = *(RHSMatrix_.get()+i*NumNodes_+j) + *(RHregen_.get()+i*NumNodes_+j);
         }
     } else if(newflavor_ == -1){
-        set_glashow_total(NumNodes_,energy_nodes_);
-        for (int i = 0; i < NumNodes_; i++){
+        set_glashow_total();
+        for (unsigned int i = 0; i < NumNodes_; i++){
             sigma_array_[i] = sigma_array_[i] + glashow_total_[i]/2.; 
             *(RHSMatrix_.get() +i) = *(RHSMatrix_.get() +i) + *(glashow_partial_.get() + i)/2.;
 
         }
     }
-    std::vector<double> phi_0_(NumNodes_);
-    for (int i = 0; i < NumNodes_; i++){
+    phi_0_ = std::vector<double>(NumNodes_);
+    for (unsigned int i = 0; i < NumNodes_; i++){
         phi_0_[i] = std::pow(energy_nodes_[i],(2.-newgamma_));
     }
-    for (int i = 0; i < NumNodes_; i++){
+    for (unsigned int i = 0; i < NumNodes_; i++){
         *(RHSMatrix_.get()+i*NumNodes_+i) = *(RHSMatrix_.get()+i*NumNodes_+i) + sigma_array_[i];    
     }
 

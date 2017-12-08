@@ -55,9 +55,9 @@ class nuFACE {
     std::string getFilename() const;
     double getNumNodes() const;
   protected:
-    void set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_);
-    void set_glashow_partial(unsigned int NumNodes_, std::vector<double> energy_nodes_);
-    void set_RHS_matrices(std::shared_ptr<double> RMatrix_, unsigned int NumNodes, std::vector<double> energy_nodes, std::vector<double> sigma_array_, std::shared_ptr<double> dxs_array_);
+    void set_glashow_total();
+    void set_glashow_partial();
+    void set_RHS_matrices(std::shared_ptr<double> RMatrix_, std::shared_ptr<double> dxs_array) const;
     double readDoubleAttribute(hid_t, std::string) const;
     unsigned int readUIntAttribute(hid_t, std::string) const;
     std::vector<double> logspace(double min,double max,unsigned int samples) const;

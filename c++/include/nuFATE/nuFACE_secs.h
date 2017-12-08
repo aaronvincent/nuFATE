@@ -32,17 +32,17 @@ struct Result {
 
 class nuFACE_secs {
   private:
-    double const GF = 1.16e-5;
-    double const hbarc = 1.97e-14;
-    double const GW = 2.085;
-    double const MW = 80.385e0;
-    double const mmu = 0.106e0;
-    double const me = 511.e-6;
-    double const pi = 3.14159265358979323846;
-    double const MZ = 91.18;
-    double const s2t = 0.23;
-    double const gL =  s2t-0.5;
-    double const gR = s2t;
+    const double GF = 1.16e-5;
+    const double hbarc = 1.97e-14;
+    const double GW = 2.085;
+    const double MW = 80.385e0;
+    const double mmu = 0.106e0;
+    const double me = 511.e-6;
+    const double pi = 3.14159265358979323846;
+    const double MZ = 91.18;
+    const double s2t = 0.23;
+    const double gL =  s2t-0.5;
+    const double gR = s2t;
   private:
     int newflavor_;
     double newgamma_;
@@ -54,9 +54,9 @@ class nuFACE_secs {
     double getGamma() const;
     std::string getFilename() const;
   protected:
-    void set_glashow_total(unsigned int NumNodes_, std::vector<double> energy_nodes_);
-    void set_glashow_partial(unsigned int NumNodes, std::vector<double> energy_nodes_);
-    void set_RHS_matrices(std::shared_ptr<double> RMatrix_, unsigned int NumNodes_, std::vector<double> energy_nodes_, std::vector<double> sigma_array_, std::vector<double> sig3_array_, std::shared_ptr<double> dxs_array_, std::shared_ptr<double> sec_array_, std::shared_ptr<double> regen_array_);
+    void set_glashow_total();
+    void set_glashow_partial();
+    void set_RHS_matrices();
     unsigned int readUIntAttribute(hid_t, std::string) const;
     std::vector<double> logspace(double min,double max,unsigned int samples) const;
     double readDoubleAttribute(hid_t, std::string) const;
@@ -66,7 +66,7 @@ private:
     std::string grpdiff_;
     std::string grptot_;
     unsigned int NumNodes_;
-    int rsize_;
+    unsigned int rsize_;
     double Emax_;
     double Emin_;
     std::vector<double> energy_nodes_;
