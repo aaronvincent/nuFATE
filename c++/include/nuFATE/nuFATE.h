@@ -16,6 +16,7 @@
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_permutation.h>
+#include <gsl/gsl_integration.h>
 
 #ifndef NUFATE_H
 #define NUFATE_H
@@ -42,6 +43,7 @@ class nuFACE {
     const double MZ = 91.18;
     const double s2t = 0.23;
     const double gL =  s2t-0.5;
+    const double REarth = 6371.;
     const double gR = s2t;
   private:
     int newflavor_;
@@ -50,6 +52,8 @@ class nuFACE {
   public:
     nuFACE(int, double, std::string);
     Result get_eigs();
+    double get_t_earth(double theta); //calculates column density for a given angle in radians
+    static double rho_earth(double theta, void * p); //returns density for a given angle in radians along x distance
     int getFlavor() const;
     double getGamma() const;
     std::string getFilename() const;

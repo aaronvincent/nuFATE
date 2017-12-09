@@ -1,4 +1,5 @@
 #include "nuFATE.h"
+#include <iostream>
 
 namespace nufate{
 
@@ -82,7 +83,7 @@ void nuFACE::set_glashow_total(){
         glashow_total_[i] = 2.*me*energy_nodes_[i];
         double x = glashow_total_[i];
         glashow_total_[i] = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
-//        std::cout << glashow_total_[i] << std::endl;
+        std::cout << glashow_total_[i] << std::endl;
     }
     return;
 }
@@ -162,12 +163,10 @@ Result nuFACE::get_eigs() {
  	      sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "nutauxs", sigma_array_.data());
     }
-        
 
     hsize_t dxarraysize[2];
     group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);
-    
-    if (newflavor_ > 0){
+   if (newflavor_ > 0){
         H5LTget_dataset_info(group_id,"dxsnu", dxarraysize,NULL,NULL);    
         size_t dim1 = dxarraysize[0];
         size_t dim2 = dxarraysize[1];
@@ -266,7 +265,80 @@ Result nuFACE::get_eigs() {
 
     return r1;
 }
-      
+
+struct rho_earth_params {double theta;};
+
+double nuFACE::rho_earth(double x, void * p){
+    double RE = 6371.;
+    struct rho_earth_params * params = (struct my_f_params *)p;
+    double theta = (params->theta);
+    double xmax = 2.*abs(RE*cos(theta));
+    double R = std::pow(RE,2) + std::pow((xmax-x),2) + 2.*RE*(xmax-x)*cos(theta);
+    double r = std::pow(R,0.5);
+    double p1;
+    double p2;
+    double p3;
+
+    if (r<1221.){
+        p1 = -0.0002177;
+        p2 = -4.265e-06;
+        p3 = 1.309e+04;
+    } else if (r<3480.){
+        p1 = -0.0002409;
+        p2 = -4.265e-06;
+        p3 = 1.309e+04;
+    } else if (r<5721.){
+        p1 = -3.764e-05;
+        p2 = -0.1876;
+        p3 = 6664.;
+    } else if (r<5961.){
+        p1 = 0.;
+        p2 = -1.269;
+        p3 = 1.131e+04;
+    } else if (r<6347.){
+        p1 = 0.;
+        p2 = -0.725;
+        p3 = 7887.;
+    } else if (r<6356.){
+        p1 = 0.;
+        p2 = 0.;
+        p3 = 2900.;
+    } else if (r<6368.){
+        p1 = 0.;
+        p2 = 0.;
+        p3 = 2600.;
+    } else {
+        p1 = 0.;
+        p2 = 0.;
+        p3 = 1020.;
+    }
+
+    double rho = p1*std::pow(r,2)+p2*r+p3;
+    return rho*1.0e-3;
+}
+
+double nuFACE::get_t_earth(double theta){
+    double t;
+    if (theta < pi/2.){
+       t = 0;
+    } else {
+      double kmtocm = 1.0e5;
+      double result, error;
+      gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
+      gsl_function F;
+      struct my_f_params params = {theta};
+      F.function = &nuFACE::rho_earth;
+      F.params = &params;
+      double xmax = 2.*abs(REarth*cos(theta));
+
+      gsl_integration_qags(&F, 0, xmax, 1.0e-18, 1.0e-3, 1000, w, &result, &error);
+      t = result*kmtocm;
+    }
+
+   return t;
+}
+
+
 int nuFACE::getFlavor() const {
     return newflavor_;
 }
