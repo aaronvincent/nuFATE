@@ -1,5 +1,5 @@
 #include "nuFATE.h"
-#include <iostream>
+
 namespace nufate{
 
 nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename) {
@@ -82,7 +82,7 @@ void nuFACE::set_glashow_total(){
         glashow_total_[i] = 2.*me*energy_nodes_[i];
         double x = glashow_total_[i];
         glashow_total_[i] = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
-        std::cout << glashow_total_[i] << std::endl;
+//        std::cout << glashow_total_[i] << std::endl;
     }
     return;
 }
@@ -138,9 +138,9 @@ Result nuFACE::get_eigs() {
         H5LTget_dataset_info(group_id,"numubarxs", sarraysize,NULL,NULL);
         sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "numubarxs", sigma_array_.data());
-        for(unsigned long i = 0; i<sigma_array_.size();i++){
-           std::cout << sigma_array_[i] << std::endl;
-        }
+//       for(unsigned long i = 0; i<sigma_array_.size();i++){
+//           std::cout << sigma_array_[i] << std::endl;
+//        }
     }  else if (newflavor_ == -3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutaubarxs", sarraysize,NULL,NULL);
@@ -154,12 +154,12 @@ Result nuFACE::get_eigs() {
     }  else if (newflavor_ == 2){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"numuxs", sarraysize,NULL,NULL);
-	sigma_array_ = std::vector<double>(sarraysize[0]);
+	      sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "numuxs", sigma_array_.data());
     }  else if (newflavor_ == 3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutauxs", sarraysize,NULL,NULL);
- 	sigma_array_ = std::vector<double>(sarraysize[0]);
+ 	      sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "nutauxs", sigma_array_.data());
     }
         
