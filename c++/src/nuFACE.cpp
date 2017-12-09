@@ -270,7 +270,7 @@ struct rho_earth_params {double theta;};
 
 double nuFACE::rho_earth(double x, void * p){
     double RE = 6371.;
-    struct rho_earth_params * params = (struct my_f_params *)p;
+    struct rho_earth_params * params = (struct rho_earth_params *)p;
     double theta = (params->theta);
     double xmax = 2.*abs(RE*cos(theta));
     double R = std::pow(RE,2) + std::pow((xmax-x),2) + 2.*RE*(xmax-x)*cos(theta);
@@ -326,7 +326,7 @@ double nuFACE::get_t_earth(double theta){
       double result, error;
       gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
       gsl_function F;
-      struct my_f_params params = {theta};
+      struct rho_earth_params params = {theta};
       F.function = &nuFACE::rho_earth;
       F.params = &params;
       double xmax = 2.*abs(REarth*cos(theta));

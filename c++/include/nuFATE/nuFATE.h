@@ -53,7 +53,6 @@ class nuFACE {
     nuFACE(int, double, std::string);
     Result get_eigs();
     double get_t_earth(double theta); //calculates column density for a given angle in radians
-    static double rho_earth(double theta, void * p); //returns density for a given angle in radians along x distance
     int getFlavor() const;
     double getGamma() const;
     std::string getFilename() const;
@@ -62,6 +61,7 @@ class nuFACE {
     void set_glashow_total();
     void set_glashow_partial();
     void set_RHS_matrices(std::shared_ptr<double> RMatrix_, std::shared_ptr<double> dxs_array) const;
+    static double rho_earth(double theta, void * p); //returns density for a given angle in radians along x distance
     double readDoubleAttribute(hid_t, std::string) const;
     unsigned int readUIntAttribute(hid_t, std::string) const;
     std::vector<double> logspace(double min,double max,unsigned int samples) const;
