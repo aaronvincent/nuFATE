@@ -193,9 +193,15 @@ Result nuFACE::get_eigs() {
         H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
         size_t dim2 = tauarraysize[1];
+        std::cout <<"Getting tau array" << std::endl;
+        std::cout << dim1 << std::endl;
+        std::cout << dim2 << std::endl;
         tau_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", tau_array_.get());
-        set_RHS_matrices(RHregen_, tau_array_); 
+        std::cout << "Got it!" << std::endl;
+        RHregen_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+        set_RHS_matrices(RHregen_, tau_array_);
+        std::cout << "set them RHSsss" << std::endl;
         for (unsigned int i = 0; i<NumNodes_; i++){
             for(unsigned int j=0; j<NumNodes_;j++)
             *(RHSMatrix_.get()+i*NumNodes_+j) = *(RHSMatrix_.get()+i*NumNodes_+j) + *(RHregen_.get()+i*NumNodes_+j);
@@ -209,6 +215,7 @@ Result nuFACE::get_eigs() {
         size_t dim2 = tauarraysize[1];
         tau_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", tau_array_.get());
+        RHregen_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
         set_RHS_matrices(RHregen_, tau_array_);
         for (unsigned int i = 0; i<NumNodes_; i++){
             for(unsigned int j=0; j<NumNodes_;j++)
@@ -229,12 +236,6 @@ Result nuFACE::get_eigs() {
     for (unsigned int i = 0; i < NumNodes_; i++){
         *(RHSMatrix_.get()+i*NumNodes_+i) = *(RHSMatrix_.get()+i*NumNodes_+i) + sigma_array_[i];    
     }
-//    
-//    for(unsigned int i=0;i<NumNodes_;i++){
-//      for(unsigned int j=0;j<NumNodes_;j++){
-//        std::cout << *(RHSMatrix_.get()+i * NumNodes_+j) << std::endl;
-//     }
-//    }
 
     //compute eigenvalues and eigenvectors
 
