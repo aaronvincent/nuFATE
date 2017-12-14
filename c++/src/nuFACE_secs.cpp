@@ -37,7 +37,7 @@ nuFACE_secs::nuFACE_secs(int flavor, double gamma, std::string h5_filename) : ne
     }
 
 
-}   
+}
 
 double nuFACE_secs::readDoubleAttribute(hid_t object, std::string name) const{
         double target;
@@ -59,18 +59,18 @@ unsigned int nuFACE_secs::readUIntAttribute(hid_t object, std::string name) cons
   return target;
 }
 
-std::vector<double> nuFACE_secs::logspace(double Emin,double Emax,unsigned int div) const{
+std::vector<double> nuFACE_secs::logspace(double Emin,double Emax,unsigned int div) const {
     if(div==0)
         throw std::length_error("number of samples requested from logspace must be nonzero");
     std::vector<double> logpoints(div);
     double Emin_log,Emax_log;
-    Emin_log = log(Emin);
-    Emax_log = log(Emax);
+    Emin_log = log10(Emin);
+    Emax_log = log10(Emax);
     double step_log = (Emax_log - Emin_log)/double(div-1);
     logpoints[0]=Emin;
     double EE = Emin_log+step_log;
     for(unsigned int i=1; i<div-1; i++, EE+=step_log)
-        logpoints[i] = exp(EE);
+        logpoints[i] = std::pow(10,EE);
     logpoints[div-1]=Emax;
     return logpoints;
 }
@@ -99,7 +99,7 @@ void nuFACE_secs::set_glashow_partial(){
                 *(glashow_partial_.get()+i*NumNodes_+j) = (std::pow(GF,2)* *(selectron_.get()+i*NumNodes_+j)/pi*(*(t1_.get()+i*NumNodes_+j)+ (std::pow(*(t2_.get()+i*NumNodes_+j) , 2) + std::pow(*(t3_.get()+i*NumNodes_+j),2)) * std::pow((1.-*(Enu_.get()+i*NumNodes_+j)),2))*std::pow(hbarc,2))/ *(Enuin_.get()+i*NumNodes_+j);
             } else {
                 *(glashow_partial_.get()+i*NumNodes_+j) = 0.;
-            }  
+            }
         }
     }
     return;
@@ -135,7 +135,7 @@ void nuFACE_secs::set_RHS_matrices(){
                 } else {
                         *(RHSMatrix_.get()+i*rsize_+j) = *(RHSMatrix3_.get()+i*NumNodes_+j);
                 }
-            }       
+            }
         } else {
             for (unsigned int j = 0; j<rsize_;j++){
                 if (j<NumNodes_){
@@ -143,7 +143,7 @@ void nuFACE_secs::set_RHS_matrices(){
                 } else {
                         *(RHSMatrix_.get()+i*rsize_+j) = *(RHSMatrix4_.get()+i*NumNodes_+j);
                  }
-            }     
+            }
         }
     }
 
@@ -154,7 +154,7 @@ Result nuFACE_secs::get_eigs() {
 
     hid_t group_id;
     group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
-       
+
     if (newflavor_ == -1) {
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nuebarxs", sarraysize,NULL,NULL);
@@ -288,5 +288,80 @@ Result nuFACE_secs::get_eigs() {
     return r1;
 
 }
+
+struct rho_earth_params {double theta;};
+
+double nuFACE_secs::rho_earth(double x, void * p){
+    double RE = 6371.;
+    struct rho_earth_params * params = (struct rho_earth_params *)p;
+    double theta = (params->theta);
+    double xmax = 2.*abs(RE*cos(theta));
+    double R = std::pow(RE,2) + std::pow((xmax-x),2) + 2.*RE*(xmax-x)*cos(theta);
+    double r = std::pow(R,0.5);
+    double p1;
+    double p2;
+    double p3;
+
+    if (r<1221.){
+        p1 = -0.0002177;
+        p2 = -4.265e-06;
+        p3 = 1.309e+04;
+    } else if (r<3480.){
+        p1 = -0.0002409;
+        p2 = -4.265e-06;
+        p3 = 1.309e+04;
+    } else if (r<5721.){
+        p1 = -3.764e-05;
+        p2 = -0.1876;
+        p3 = 6664.;
+    } else if (r<5961.){
+        p1 = 0.;
+        p2 = -1.269;
+        p3 = 1.131e+04;
+    } else if (r<6347.){
+        p1 = 0.;
+        p2 = -0.725;
+        p3 = 7887.;
+    } else if (r<6356.){
+        p1 = 0.;
+        p2 = 0.;
+        p3 = 2900.;
+    } else if (r<6368.){
+        p1 = 0.;
+        p2 = 0.;
+        p3 = 2600.;
+    } else {
+        p1 = 0.;
+        p2 = 0.;
+        p3 = 1020.;
+    }
+
+    double rho = p1*std::pow(r,2)+p2*r+p3;
+    return rho*1.0e-3;
+}
+
+double nuFACE_secs::get_t_earth(double theta){
+    double t;
+    if (theta < pi/2.){
+       t = 0;
+    } else {
+      double kmtocm = 1.0e5;
+      double result, error;
+      gsl_integration_workspace * w = gsl_integration_workspace_alloc(1000);
+      gsl_function F;
+      struct rho_earth_params params = {theta};
+      F.function = &nuFACE_secs::rho_earth;
+      F.params = &params;
+      double xmax = 2.*abs(REarth*cos(theta));
+
+      gsl_integration_qags(&F, 0, xmax, 1.0e-18, 1.0e-3, 1000, w, &result, &error);
+      t = result*kmtocm;
+    }
+
+   return t;
+}
+
+
+
 
 } //close namespace

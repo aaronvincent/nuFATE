@@ -21,6 +21,7 @@ nuFACE::nuFACE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     glashow_total_ = std::vector<double>(NumNodes_);
     glashow_partial_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     RHSMatrix_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    A_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     Enuin_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     Enu_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     den_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
@@ -109,8 +110,8 @@ void nuFACE::set_glashow_partial(){
     return;
 }
 
-void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<double> dxsarray) const{
-    for(unsigned int i = 0; i < NumNodes_; i++) 
+void nuFACE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<double> dxsarray) {
+    for(unsigned int i = 0; i < NumNodes_; i++)
     {
         for(unsigned int j= i+1; j < NumNodes_; j++){
             double e1 = 1./ energy_nodes_[j];
@@ -246,9 +247,26 @@ Result nuFACE::get_eigs() {
 
     int s;
     gsl_vector *ci = gsl_vector_alloc(NumNodes_);
-    gsl_permutation *p = gsl_permutation_alloc(NumNodes_);
+    gsl_permutation * p = gsl_permutation_alloc(NumNodes_);
     gsl_vector_view b = gsl_vector_view_array (&phi_0_.front(), NumNodes_);
+//  double* v = evec->data;
+//    for (unsigned int i=0; i <NumNodes_;i++){
+//      for (unsigned int j=0;j<NumNodes_;j++){
+ //        *(A_.get()+i*NumNodes_+j) = *(evec->data + i * NumNodes_ + j);
+   //      std::cout << *(evec->data + i * NumNodes_ + j) << std::endl;
+  //    }
+//    }
 
+//    for (unsigned int i = 0; i < NumNodes_; i++){
+       // double eval_i = eval->data[i * eval->stride];
+//        gsl_complex eval_i = gsl_vector_complex_get (eval, i);
+//        gsl_vector_complex_view evec_i = gsl_matrix_complex_column (evec, i);
+//        printf ("eigenvalue = ", eval_i);
+//        printf ("eigenvector = \n");
+//        gsl_vector_complex_fprintf (stdout,&evec_i.vector, "%g");
+//                                                                }
+//    gsl_matrix_view n = gsl_matrix_view_array(A_.get(), NumNodes_, NumNodes_);
+//    gsl_linalg_LU_decomp(&m.matrix, p, &s)
     gsl_linalg_LU_decomp (&m.matrix, p, &s);
     gsl_linalg_LU_solve (&m.matrix, p, &b.vector, ci);
 

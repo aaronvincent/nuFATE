@@ -60,7 +60,7 @@ class nuFACE {
   protected:
     void set_glashow_total();
     void set_glashow_partial();
-    void set_RHS_matrices(std::shared_ptr<double> RMatrix_, std::shared_ptr<double> dxs_array) const;
+    void set_RHS_matrices(std::shared_ptr<double> RMatrix_, std::shared_ptr<double> dxs_array);
     static double rho_earth(double theta, void * p); //returns density for a given angle in radians along x distance
     double readDoubleAttribute(hid_t, std::string) const;
     unsigned int readUIntAttribute(hid_t, std::string) const;
@@ -82,6 +82,7 @@ class nuFACE {
     std::shared_ptr<double> dxs_array_;
     std::shared_ptr<double> tau_array_;
     std::shared_ptr<double> RHSMatrix_;
+    std::shared_ptr<double> A_;
     std::shared_ptr<double> RHregen_;
     std::shared_ptr<double> glashow_partial_;
     std::shared_ptr<double> Enuin_;

@@ -16,6 +16,7 @@
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_permutation.h>
+#include <gsl/gsl_integration.h>
 
 #ifndef NUFACE_SECS_H
 #define NUFACE_SECS_H
@@ -40,6 +41,7 @@ class nuFACE_secs {
     const double me = 511.e-6;
     const double pi = 3.14159265358979323846;
     const double MZ = 91.18;
+    const double REarth = 6371.;
     const double s2t = 0.23;
     const double gL =  s2t-0.5;
     const double gR = s2t;
@@ -50,6 +52,7 @@ class nuFACE_secs {
   public:
     nuFACE_secs(int, double, std::string);
     Result get_eigs();
+    double get_t_earth(double theta); //calculates column density for a given angle in radians
     int getFlavor() const;
     double getGamma() const;
     std::string getFilename() const;
@@ -59,8 +62,9 @@ class nuFACE_secs {
     void set_RHS_matrices();
     unsigned int readUIntAttribute(hid_t, std::string) const;
     std::vector<double> logspace(double min,double max,unsigned int samples) const;
+    static double rho_earth(double theta, void * p); //returns density for a given angle in radians along x distance
     double readDoubleAttribute(hid_t, std::string) const;
-private:
+  private:
     hid_t file_id_;
     hid_t root_id_;
     std::string grpdiff_;
