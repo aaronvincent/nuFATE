@@ -43,7 +43,7 @@ class nuFATE {
     const double MW = 80.385e0;
     const double mmu = 0.106e0;
     const double me = 511.e-6;
-    const double pi = 3.14159265358979323846;
+    const double pi = M_PI;
     const double MZ = 91.18;
     const double s2t = 0.23;
     const double gL =  s2t-0.5;
