@@ -77,9 +77,9 @@ clean:
 	@rm -f $(PATH_nuFATE)/$(STAT_PRODUCT) $(PATH_nuFATE)/$(DYN_PRODUCT)
 
 doxygen:
-	@doxygen src/doxyfile
+	@doxygen src/cpp/doxyfile
 docs:
-	@doxygen src/doxyfile
+	@doxygen src/cpp/doxyfile
 
 install: $(DYN_PRODUCT) $(STAT_PRODUCT)
 	@echo Installing headers in $(PREFIX)/include/nuFATE
