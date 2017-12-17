@@ -23,6 +23,8 @@
 
 namespace nufate{
 
+///\class Result
+///\brief Simple struct to hold the results
 struct Result {
   double* eval;
   double* evec;
@@ -31,6 +33,8 @@ struct Result {
   std::vector<double> phi_0_;
 };
 
+///\class nuFATE
+///\brief nuFATE main class
 class nuFATE {
   private:
     const double GF = 1.16e-5;
@@ -50,12 +54,23 @@ class nuFATE {
     double newgamma_;
     std::string newh5_filename_;
   public:
-    nuFATE(int, double, std::string);
-    Result get_eigs();
-    double get_t_earth(double theta); //calculates column density for a given angle in radians
+    /// \brief Constructor
+    /// @param flv Position of the system.
+    /// @param gamma spectral index of input flux.
+    /// @param h5_filename name of hdf5 file containing the cross sections.
+    nuFATE(int flv, double gamma, std::string h5_filename);
+    /// \brief Eigensystem calculator
+    Result getEigensystem();
+    /// \brief Function to get Earth column density
+    /// @param theta Zenith angle in radians.
+    double getEarthColumnDensity(double theta);
+    /// \brief Function to get flavor
     int getFlavor() const;
+    /// \brief Function to get input spectral index
     double getGamma() const;
+    /// \brief Function to get input filename
     std::string getFilename() const;
+    /// \brief Function to get number of energy nodes
     double getNumNodes() const;
   protected:
     void set_glashow_total();
@@ -92,7 +107,6 @@ class nuFATE {
     std::shared_ptr<double> t1_;
     std::shared_ptr<double> t2_;
     std::shared_ptr<double> t3_;
-
 };
 
 }
