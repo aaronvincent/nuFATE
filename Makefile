@@ -1,12 +1,14 @@
-# Compiler
-#CC=clang
-#CXX=clang++
-#AR=ar
-#LD=clang++
+OS_NAME=$(shell uname -s)
 
+ifeq (${OS_NAME},Linux)
+DYN_SUFFIX=.so
+DYN_OPT=-shared -Wl,-soname,$(shell basename $(DYN_PRODUCT))
+endif
 
+ifeq (${OS_NAME},Darwin)
 DYN_SUFFIX=.dylib
 DYN_OPT=-dynamiclib -compatibility_version $(VERSION) -current_version $(VERSION)
+endif
 
 VERSION=1.0.0
 
@@ -16,8 +18,8 @@ endif
 
 PATH_nuFATE=$(shell pwd)
 
-SOURCES = $(wildcard src/*.cpp)
-OBJECTS = $(patsubst src/%.cpp,build/%.o,$(SOURCES))
+SOURCES = $(wildcard src/cpp/*.cpp)
+OBJECTS = $(patsubst src/cpp/%.cpp,build/%.o,$(SOURCES))
 
 EXAMPLES := examples/example
 
@@ -51,14 +53,17 @@ examples : $(EXAMPLES)
 
 $(DYN_PRODUCT) : $(OBJECTS)
 	@echo Linking $(DYN_PRODUCT)
+	@mkdir -p lib
 	@$(CXX) $(DYN_OPT)  $(LDFLAGS) -o $(DYN_PRODUCT) $(OBJECTS)
 
 $(STAT_PRODUCT) : $(OBJECTS)
 	@echo Linking $(STAT_PRODUCT)
+	@mkdir -p lib
 	@$(AR) -rcs $(STAT_PRODUCT) $(OBJECTS)
 
-build/%.o : src/%.cpp
+build/%.o : src/cpp/%.cpp
 	@echo Compiling $< to $@
+	@mkdir -p build
 	@$(CXX) $(CXXFLAGS) -c $(CFLAGS) $< -o $@
 
 examples/example: $(DYN_PRODUCT) examples/example.cpp
