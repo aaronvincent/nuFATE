@@ -59,6 +59,13 @@ class nuFATE {
     /// @param gamma spectral index of input flux.
     /// @param h5_filename name of hdf5 file containing the cross sections.
     nuFATE(int flv, double gamma, std::string h5_filename);
+    /// \brief Constructor
+    /// @param flv Position of the system.
+    /// @param gamma spectral index of input flux.
+    /// @param energy_nodes energy nodes in GeV.
+    /// @param sigma_array total cross section at each energy node in cm^2.
+    /// @param dsigma_dE square array of differential cross section in cm^2/GeV.
+    nuFATE(int flv, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE);
     /// \brief Eigensystem calculator
     Result getEigensystem();
     /// \brief Function to get Earth column density
@@ -81,6 +88,8 @@ class nuFATE {
     unsigned int readUIntAttribute(hid_t, std::string) const;
     std::vector<double> logspace(double min,double max,unsigned int samples) const;
   private:
+    void AllocateMemoryForMembers(unsigned int num_nodes);
+    void SetEnergyBinWidths();
     std::string grpdiff_;
     std::string grptot_;
     hid_t file_id_;
@@ -107,6 +116,8 @@ class nuFATE {
     std::shared_ptr<double> t1_;
     std::shared_ptr<double> t2_;
     std::shared_ptr<double> t3_;
+  private:
+    bool memory_allocated_ = false;
 };
 
 }

@@ -4,7 +4,6 @@
 namespace nufate{
 
 nuFATE::nuFATE(int flavor, double gamma, std::string h5_filename) : newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename) {
-
     //open h5file containing cross sections (xsh5)
     file_id_ = H5Fopen(h5_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     root_id_ = H5Gopen(file_id_, "/", H5P_DEFAULT);
@@ -15,9 +14,33 @@ nuFATE::nuFATE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     Emax_ = readDoubleAttribute(group_id, "max_energy");
     Emin_ = readDoubleAttribute(group_id, "min_energy");
     NumNodes_ = readUIntAttribute(group_id, "number_energy_nodes");
+    // allocate memory
+    AllocateMemoryForMembers(NumNodes_);
+    //set energy nodes and deltaE
+    energy_nodes_ = logspace(Emin_, Emax_, NumNodes_);
+    // calculate and set energy bin widths
+    SetEnergyBinWidths();
+}
+
+nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE):
+  newflavor_(flavor), newgamma_(gamma), energy_nodes_(energy_nodes), sigma_array_(sigma_array)
+{
+  NumNodes_ = energy_nodes_.size();
+  Emax_ = energy_nodes_.back();
+  Emin_ = energy_nodes_.front();
+  if(sigma_array.size() != NumNodes_)
+    throw std::runtime_error("nuFATE::nuFATE Total cross section array does not match energy nodes size.");
+  if(dsigma_dE.size() != NumNodes_ or dsigma_dE.front().size() != NumNodes_)
+    throw std::runtime_error("nuFATE::nuFATE Differential cross section array does not match energy nodes size.");
+  AllocateMemoryForMembers(NumNodes_);
+  SetEnergyBinWidths();
+}
+
+void nuFATE::AllocateMemoryForMembers(unsigned int NumNodes){
+  // if the energy nodes are different or if memory has not been allocated. Allocate it.
+  if(NumNodes_ != NumNodes or (not memory_allocated_)){
+    NumNodes_ = NumNodes;
     //allocate memory that will be used in functions below
-    energy_nodes_.resize(NumNodes_);
-    DeltaE_ = std::vector<double>(NumNodes_);
     glashow_total_ = std::vector<double>(NumNodes_);
     glashow_partial_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     RHSMatrix_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
@@ -29,16 +52,17 @@ nuFATE::nuFATE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     t1_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     t2_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     t3_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    //set energy nodes and deltaE
-    energy_nodes_ = logspace(Emin_, Emax_, NumNodes_);
-//    for(unsigned int i = 0; i < NumNodes_;i++){
- //       std::cout << energy_nodes_[i] << std::endl; 
-//    }
-    for(unsigned int i = 0; i < NumNodes_-1;i++){
-        DeltaE_[i] = log(energy_nodes_[i+1]) - log(energy_nodes_[i]);
-//        std::cout <<  DeltaE_[i] << std::endl;
-    }
+  }
+  memory_allocated_ = true;
+}
 
+void nuFATE::SetEnergyBinWidths(){
+  if(energy_nodes_.size() == 0)
+    throw std::runtime_error("nuFATE::SetEnergyBinWidths Energy nodes need to be set before the widths can be set.");
+  DeltaE_ = std::vector<double>(NumNodes_);
+  for(unsigned int i = 0; i < NumNodes_-1;i++){
+      DeltaE_[i] = log(energy_nodes_[i+1]) - log(energy_nodes_[i]);
+  }
 }
 
 //reads an attribute of type double from h5 object
@@ -51,6 +75,7 @@ double nuFATE::readDoubleAttribute(hid_t object, std::string name) const{
     H5Aclose(attribute_id);
     return target;
 }
+
 //reads an attribute of type unsigned int from h5 object
 unsigned int nuFATE::readUIntAttribute(hid_t object, std::string name) const{
     unsigned int target;
@@ -61,6 +86,7 @@ unsigned int nuFATE::readUIntAttribute(hid_t object, std::string name) const{
     H5Aclose(attribute_id);
     return target;
 }
+
 //given a minimum, maximum, and number of points, this function returns equally spaced array in logspace
 std::vector<double> nuFATE::logspace(double Emin,double Emax,unsigned int div) const {
     if(div==0)
@@ -78,13 +104,12 @@ std::vector<double> nuFATE::logspace(double Emin,double Emax,unsigned int div) c
     return logpoints;
 }
 
-//sets the contribution from glashow 
+//sets the contribution from glashow
 void nuFATE::set_glashow_total(){
     for(unsigned int i=0; i<NumNodes_; i++){
         glashow_total_[i] = 2.*me*energy_nodes_[i];
         double x = glashow_total_[i];
         glashow_total_[i] = 1. /3.*std::pow(GF,2)*x/pi*std::pow((1.-(std::pow(mmu,2)-std::pow(me,2))/x),2)/(std::pow((1.-x/std::pow(MW,2)),2)+std::pow(GW,2)/std::pow(MW,2))*0.676/0.1057*std::pow(hbarc,2);
-        std::cout << glashow_total_[i] << std::endl;
     }
     return;
 }
@@ -125,9 +150,6 @@ void nuFATE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<d
 Result nuFATE::getEigensystem(){
 
     hid_t group_id;
-    //file_id = H5Fopen(newh5_filename_.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    //root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
-    //std::string grptot = "/total_cross_sections";
     group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
 
     if (newflavor_ == -1) {
@@ -140,9 +162,6 @@ Result nuFATE::getEigensystem(){
         H5LTget_dataset_info(group_id,"numubarxs", sarraysize,NULL,NULL);
         sigma_array_ = std::vector<double>(sarraysize[0]);
         H5LTread_dataset_double(group_id, "numubarxs", sigma_array_.data());
-//       for(unsigned long i = 0; i<sigma_array_.size();i++){
-//           std::cout << sigma_array_[i] << std::endl;
-//        }
     }  else if (newflavor_ == -3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutaubarxs", sarraysize,NULL,NULL);
