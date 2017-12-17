@@ -122,7 +122,7 @@ void nuFATE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<d
     return;
 }
 
-Result nuFATE::get_eigs() {
+Result nuFATE::getEigensystem(){
 
     hid_t group_id;
     //file_id = H5Fopen(newh5_filename_.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -285,7 +285,7 @@ Result nuFATE::get_eigs() {
     return r1;
 }
 
-struct rho_earth_params {double theta;};
+struct rho_earth_params{double theta;};
 
 double nuFATE::rho_earth(double x, void * p){
     double RE = 6371.;
@@ -336,7 +336,7 @@ double nuFATE::rho_earth(double x, void * p){
     return rho*1.0e-3;
 }
 
-double nuFATE::get_t_earth(double theta){
+double nuFATE::getEarthColumnDensity(double theta){
     double t;
     if (theta < pi/2.){
        t = 0;
