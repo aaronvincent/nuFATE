@@ -27,8 +27,8 @@ CXXFLAGS= -std=c++11 -g -Wall -Wextra -Wshadow -Werror
 
 # Directories
 
-GSL_CFLAGS=-I/usr/local/Cellar/gsl/2.4/include
-GSL_LDFLAGS=-L/usr/local/Cellar/gsl/2.4/lib -lgsl -lgslcblas -lm
+GSL_CFLAGS=`pkg-config gsl --cflags`
+GSL_LDFLAGS=`pkg-config gsl --libs`
 HDF5_CFLAGS=-I/usr/local/Cellar/hdf5/1.10.1_1/lib/../include
 HDF5_LDFLAGS=-L/usr/local/Cellar/hdf5/1.10.1_1/lib -lhdf5_hl -lhdf5 -L/usr/local/opt/szip/lib -lsz -lz -ldl -lm
 
