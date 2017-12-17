@@ -31,7 +31,7 @@ struct Result {
   std::vector<double> phi_0_;
 };
 
-class nuFACE {
+class nuFATE {
   private:
     const double GF = 1.16e-5;
     const double hbarc = 1.97e-14;
@@ -50,7 +50,7 @@ class nuFACE {
     double newgamma_;
     std::string newh5_filename_;
   public:
-    nuFACE(int, double, std::string);
+    nuFATE(int, double, std::string);
     Result get_eigs();
     double get_t_earth(double theta); //calculates column density for a given angle in radians
     int getFlavor() const;

@@ -15,7 +15,7 @@ int main(){
 
     //Initialize an instance of the nuFATE class with these three parameters.
 
-    nufate::nuFACE object(flavor, gamma, file);
+    nufate::nuFATE object(flavor, gamma, file);
 
     //Result is a struct that stores the solution to the cascade equation.
 
