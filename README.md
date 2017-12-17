@@ -39,3 +39,11 @@ Aaron C. Vincent, Carlos A. Arguelles, and A. Kheirandish
 
 arXiv:1706.09895
 
+Contributors
+------------
+
+- Aaron C. Vincent
+- Carlos A. Arguelles
+- Ali Kheirandish
+- Ibrahim Safa
+
