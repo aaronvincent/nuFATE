@@ -11,7 +11,7 @@ can probably be obtained from your favorite package manager:
 * numpy: http://www.numpy.org/
 * scipy: http://www.scipy.org/
 
--Recommended:
+Recommended:
 * ipython: http://ipython.org/
 * jupyter: http://jupyter.readthedocs.io/
 * matplotlib: http://matplotlib.org/
