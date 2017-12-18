@@ -39,6 +39,16 @@ nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::
   AllocateMemoryForMembers(NumNodes_);
   SetEnergyBinWidths();
   SetInitialFlux();
+  SetCrossSectionsFromInput(dsigma_dE);
+}
+
+void nuFATE::SetCrossSectionsFromInput(std::vector<std::vector<double>> dsigma_dE){
+    for(unsigned int i = 0; i<NumNodes_; i++){
+        for(unsigned int j=0; j<NumNodes_; j++)
+        *(dxs_array_.get()+i*NumNodes_+j) = dsigma_dE[i][j];
+    }
+    total_cross_section_set_ = true;
+    differential_cross_section_set_ = true;
 }
 
 void nuFATE::AllocateMemoryForMembers(unsigned int NumNodes){
@@ -57,6 +67,7 @@ void nuFATE::AllocateMemoryForMembers(unsigned int NumNodes){
     t1_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     t2_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     t3_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+    dxs_array_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
   }
   memory_allocated_ = true;
 }
@@ -160,32 +171,39 @@ void nuFATE::LoadCrossSectionFromHDF5(){
     if (newflavor_ == -1) {
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nuebarxs", sarraysize,NULL,NULL);
-        sigma_array_ = std::vector<double>(sarraysize[0]);
+        if(sarraysize[0] != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "nuebarxs", sigma_array_.data());
     }  else if (newflavor_ == -2){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"numubarxs", sarraysize,NULL,NULL);
-        sigma_array_ = std::vector<double>(sarraysize[0]);
+        if(sarraysize[0] != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "numubarxs", sigma_array_.data());
     }  else if (newflavor_ == -3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutaubarxs", sarraysize,NULL,NULL);
-        sigma_array_ = std::vector<double>(sarraysize[0]);
+        if(sarraysize[0] != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "nutaubarxs", sigma_array_.data());
     }  else if (newflavor_ == 1){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nuexs", sarraysize,NULL,NULL);
-        sigma_array_ = std::vector<double>(sarraysize[0]);
+        if(sarraysize[0] != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "nuexs", sigma_array_.data());
     }  else if (newflavor_ == 2){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"numuxs", sarraysize,NULL,NULL);
-	      sigma_array_ = std::vector<double>(sarraysize[0]);
+        H5LTget_dataset_info(group_id,"nuexs", sarraysize,NULL,NULL);
+        if(sarraysize[0] != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "numuxs", sigma_array_.data());
     }  else if (newflavor_ == 3){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"nutauxs", sarraysize,NULL,NULL);
- 	      sigma_array_ = std::vector<double>(sarraysize[0]);
+        if(sarraysize[0] != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "nutauxs", sigma_array_.data());
     }
 
@@ -193,20 +211,18 @@ void nuFATE::LoadCrossSectionFromHDF5(){
     group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);
    if (newflavor_ > 0){
         H5LTget_dataset_info(group_id,"dxsnu", dxarraysize,NULL,NULL);
-        size_t dim1 = dxarraysize[0];
-        size_t dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        dxs_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
+        if((unsigned int)(dxsdim_[0]) != NumNodes_ or (unsigned int)(dxsdim_[1]) != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Secondaries arrays do not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
     } else {
         H5LTget_dataset_info(group_id,"dxsnubar", dxarraysize,NULL,NULL);
-        size_t dim1 = dxarraysize[0];
-        size_t dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
         dxsdim_[1] = dxarraysize[1];
-        dxs_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
-        H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
+        if((unsigned int)(dxsdim_[0]) != NumNodes_ or (unsigned int)(dxsdim_[1]) != NumNodes_)
+          throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Secondaries arrays do not match number of energy nodes.");
+        H5LTread_dataset_double(group_id, "dxsnubar", dxs_array_.get());
     }
 
    total_cross_section_set_ = true;

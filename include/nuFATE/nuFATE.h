@@ -84,6 +84,7 @@ class nuFATE {
   protected:
     void AddSecondaryTerms();
     void LoadCrossSectionFromHDF5();
+    void SetCrossSectionsFromInput(std::vector<std::vector<double>> dsigma_dE);
     void SetInitialFlux();
     void set_glashow_total();
     void set_glashow_partial();
