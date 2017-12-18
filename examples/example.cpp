@@ -22,7 +22,7 @@ int main(){
     nufate::Result result;
 
     //get_eigs() solves the cascade equation
-    result = object.get_eigs();
+    result = object.getEigensystem();
     int NumNodes;
     NumNodes = object.getNumNodes();
 
@@ -43,7 +43,7 @@ int main(){
     std::vector<double> abs;
     std::vector<double> phi_sol;
 //Calculate earth column density for a given zenith
-    t = object.get_t_earth(zenith) * Na;
+    t = object.getEarthColumnDensity(zenith) * Na;
 //    std::cout << t << std::endl;
     double* eval = result.eval;
     for(int i=0; i<NumNodes; i++){
