@@ -79,7 +79,12 @@ class nuFATE {
     std::string getFilename() const;
     /// \brief Function to get number of energy nodes
     double getNumNodes() const;
+    /// \brief Function to toggle secondaries
+    void setAddSecondaries(bool opt) { add_secondary_term_ = opt;}
   protected:
+    void AddSecondaryTerms();
+    void LoadCrossSectionFromHDF5();
+    void SetInitialFlux();
     void set_glashow_total();
     void set_glashow_partial();
     void set_RHS_matrices(std::shared_ptr<double> RMatrix_, std::shared_ptr<double> dxs_array);
@@ -118,6 +123,13 @@ class nuFATE {
     std::shared_ptr<double> t3_;
   private:
     bool memory_allocated_ = false;
+    bool initial_flux_set_ = false;
+    bool total_cross_section_set_ = false;
+    bool differential_cross_section_set_ = false;
+    bool RHS_set_ = false;
+    bool add_tau_regeneration_ = true;
+    bool add_glashow_term_= true;
+    bool add_secondary_term_ = true;
 };
 
 }

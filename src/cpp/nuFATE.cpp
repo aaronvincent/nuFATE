@@ -20,6 +20,10 @@ nuFATE::nuFATE(int flavor, double gamma, std::string h5_filename) : newflavor_(f
     energy_nodes_ = logspace(Emin_, Emax_, NumNodes_);
     // calculate and set energy bin widths
     SetEnergyBinWidths();
+    // load cross sections from file
+    LoadCrossSectionFromHDF5();
+    // set the initial flux
+    SetInitialFlux();
 }
 
 nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE):
@@ -34,6 +38,7 @@ nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::
     throw std::runtime_error("nuFATE::nuFATE Differential cross section array does not match energy nodes size.");
   AllocateMemoryForMembers(NumNodes_);
   SetEnergyBinWidths();
+  SetInitialFlux();
 }
 
 void nuFATE::AllocateMemoryForMembers(unsigned int NumNodes){
@@ -144,11 +149,11 @@ void nuFATE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<d
             *(RMatrix.get()+i*NumNodes_+j) = DeltaE_[j - 1] * *(dxsarray.get()+j * dxsdim_[1]+i) * e1 * e2;
         }
     }
+    RHS_set_ = true;
     return;
 }
 
-Result nuFATE::getEigensystem(){
-
+void nuFATE::LoadCrossSectionFromHDF5(){
     hid_t group_id;
     group_id = H5Gopen(root_id_, grptot_.c_str(), H5P_DEFAULT);
 
@@ -187,7 +192,7 @@ Result nuFATE::getEigensystem(){
     hsize_t dxarraysize[2];
     group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);
    if (newflavor_ > 0){
-        H5LTget_dataset_info(group_id,"dxsnu", dxarraysize,NULL,NULL);    
+        H5LTget_dataset_info(group_id,"dxsnu", dxarraysize,NULL,NULL);
         size_t dim1 = dxarraysize[0];
         size_t dim2 = dxarraysize[1];
         dxsdim_[0] = dxarraysize[0];
@@ -204,28 +209,36 @@ Result nuFATE::getEigensystem(){
         H5LTread_dataset_double(group_id, "dxsnu", dxs_array_.get());
     }
 
-    set_RHS_matrices(RHSMatrix_, dxs_array_);
-    if (newflavor_ == -3){
+   total_cross_section_set_ = true;
+   differential_cross_section_set_ = true;
+}
+
+void nuFATE::SetInitialFlux(){
+    phi_0_ = std::vector<double>(NumNodes_);
+    for (unsigned int i = 0; i < NumNodes_; i++){
+        phi_0_[i] = std::pow(energy_nodes_[i],(2.-newgamma_));
+    }
+    initial_flux_set_ = true;
+}
+
+void nuFATE::AddSecondaryTerms(){
+    hid_t group_id;
+    if (newflavor_ == -3 and add_tau_regeneration_){
         std::string grptau = "/tau_decay_spectrum";
         group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
         H5LTget_dataset_info(group_id,"tbarfull", tauarraysize,NULL,NULL);
         size_t dim1 = tauarraysize[0];
         size_t dim2 = tauarraysize[1];
-        std::cout <<"Getting tau array" << std::endl;
-        std::cout << dim1 << std::endl;
-        std::cout << dim2 << std::endl;
         tau_array_ = std::shared_ptr<double>((double *)malloc(dim1*dim2*sizeof(double)),free);
         H5LTread_dataset_double(group_id, "tbarfull", tau_array_.get());
-        std::cout << "Got it!" << std::endl;
         RHregen_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
         set_RHS_matrices(RHregen_, tau_array_);
-        std::cout << "set them RHSsss" << std::endl;
         for (unsigned int i = 0; i<NumNodes_; i++){
             for(unsigned int j=0; j<NumNodes_;j++)
             *(RHSMatrix_.get()+i*NumNodes_+j) = *(RHSMatrix_.get()+i*NumNodes_+j) + *(RHregen_.get()+i*NumNodes_+j);
         }
-    } else if(newflavor_ == 3){
+    } else if (newflavor_ == 3 and add_tau_regeneration_){
         std::string grptau = "/tau_decay_spectrum";
         group_id = H5Gopen(root_id_, grptau.c_str(), H5P_DEFAULT);
         hsize_t tauarraysize[2];
@@ -240,23 +253,31 @@ Result nuFATE::getEigensystem(){
             for(unsigned int j=0; j<NumNodes_;j++)
             *(RHSMatrix_.get()+i*NumNodes_+j) = *(RHSMatrix_.get()+i*NumNodes_+j) + *(RHregen_.get()+i*NumNodes_+j);
         }
-    } else if(newflavor_ == -1){
+    } else if (newflavor_ == -1 and add_glashow_term_){
         set_glashow_total();
         for (unsigned int i = 0; i < NumNodes_; i++){
-            sigma_array_[i] = sigma_array_[i] + glashow_total_[i]/2.; 
+            sigma_array_[i] = sigma_array_[i] + glashow_total_[i]/2.;
             *(RHSMatrix_.get() +i) = *(RHSMatrix_.get() +i) + *(glashow_partial_.get() + i)/2.;
-
         }
     }
-    phi_0_ = std::vector<double>(NumNodes_);
-    for (unsigned int i = 0; i < NumNodes_; i++){
-        phi_0_[i] = std::pow(energy_nodes_[i],(2.-newgamma_));
-    }
-    for (unsigned int i = 0; i < NumNodes_; i++){
-        *(RHSMatrix_.get()+i*NumNodes_+i) = *(RHSMatrix_.get()+i*NumNodes_+i) + sigma_array_[i];    
-    }
+}
 
-    //compute eigenvalues and eigenvectors
+Result nuFATE::getEigensystem(){
+    if(not initial_flux_set_)
+      throw std::runtime_error("nuFATE::getEigensystem initial flux not set.");
+    if(not total_cross_section_set_)
+      throw std::runtime_error("nuFATE::getEigensystem total cross section not set.");
+    if(not differential_cross_section_set_)
+      throw std::runtime_error("nuFATE::getEigensystem differential cross section not set.");
+
+    set_RHS_matrices(RHSMatrix_, dxs_array_);
+
+    if(add_secondary_term_)
+      AddSecondaryTerms();
+
+    for (unsigned int i = 0; i < NumNodes_; i++){
+        *(RHSMatrix_.get()+i*NumNodes_+i) = *(RHSMatrix_.get()+i*NumNodes_+i) + sigma_array_[i];
+    }
 
     gsl_matrix_view m = gsl_matrix_view_array(RHSMatrix_.get(), NumNodes_, NumNodes_);
     gsl_vector_complex *eval = gsl_vector_complex_alloc (NumNodes_);
@@ -269,24 +290,6 @@ Result nuFATE::getEigensystem(){
     gsl_vector *ci = gsl_vector_alloc(NumNodes_);
     gsl_permutation * p = gsl_permutation_alloc(NumNodes_);
     gsl_vector_view b = gsl_vector_view_array (&phi_0_.front(), NumNodes_);
-//  double* v = evec->data;
-//    for (unsigned int i=0; i <NumNodes_;i++){
-//      for (unsigned int j=0;j<NumNodes_;j++){
- //        *(A_.get()+i*NumNodes_+j) = *(evec->data + i * NumNodes_ + j);
-   //      std::cout << *(evec->data + i * NumNodes_ + j) << std::endl;
-  //    }
-//    }
-
-//    for (unsigned int i = 0; i < NumNodes_; i++){
-       // double eval_i = eval->data[i * eval->stride];
-//        gsl_complex eval_i = gsl_vector_complex_get (eval, i);
-//        gsl_vector_complex_view evec_i = gsl_matrix_complex_column (evec, i);
-//        printf ("eigenvalue = ", eval_i);
-//        printf ("eigenvector = \n");
-//        gsl_vector_complex_fprintf (stdout,&evec_i.vector, "%g");
-//                                                                }
-//    gsl_matrix_view n = gsl_matrix_view_array(A_.get(), NumNodes_, NumNodes_);
-//    gsl_linalg_LU_decomp(&m.matrix, p, &s)
     gsl_linalg_LU_decomp (&m.matrix, p, &s);
     gsl_linalg_LU_solve (&m.matrix, p, &b.vector, ci);
 
