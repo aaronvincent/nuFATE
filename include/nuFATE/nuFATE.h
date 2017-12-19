@@ -26,12 +26,13 @@ namespace nufate{
 ///\class Result
 ///\brief Simple struct to hold the results
 struct Result {
-  double* eval;
-  double* evec;
-  double* ci;
-  std::vector<double> energy_nodes_;
-  std::vector<double> phi_0_;
+   std::vector<double> eval;
+   std::shared_ptr<double> evec;
+   std::vector<double> ci;
+   std::vector<double> energy_nodes_;
+   std::vector<double> phi_0_;
 };
+
 
 ///\class nuFATE
 ///\brief nuFATE main class
