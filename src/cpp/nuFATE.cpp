@@ -299,29 +299,52 @@ Result nuFATE::getEigensystem(){
     gsl_vector_complex *eval = gsl_vector_complex_alloc (NumNodes_);
     gsl_matrix_complex *evec = gsl_matrix_complex_alloc (NumNodes_, NumNodes_);
     gsl_eigen_nonsymmv_workspace * w = gsl_eigen_nonsymmv_alloc (NumNodes_);
-
     gsl_eigen_nonsymmv (&m.matrix, eval, evec, w);
-
+    gsl_eigen_nonsymmv_sort(eval, evec,GSL_EIGEN_SORT_ABS_ASC);
+   
     int s;
     gsl_vector *ci = gsl_vector_alloc(NumNodes_);
-    gsl_permutation * p = gsl_permutation_alloc(NumNodes_);
+    gsl_permutation *p = gsl_permutation_alloc(NumNodes_);
     gsl_vector_view b = gsl_vector_view_array (&phi_0_.front(), NumNodes_);
-    gsl_linalg_LU_decomp (&m.matrix, p, &s);
-    gsl_linalg_LU_solve (&m.matrix, p, &b.vector, ci);
-
+    gsl_matrix *V = gsl_matrix_alloc (NumNodes_,NumNodes_);
+   
+    std::shared_ptr<double> evec_out = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
+   
+    for(unsigned int i = 0; i<NumNodes_;i++){
+       for(unsigned int j=0; j<NumNodes_;j++){
+           gsl_vector_complex_view evec_i = gsl_matrix_complex_column (evec, j);
+           gsl_complex z = gsl_vector_complex_get(&evec_i.vector, i);
+           double value = GSL_REAL(z);
+           gsl_matrix_set(V , i, j, value);
+           *(evec_out.get() + i * NumNodes_ + j) = value;
+        }
+    } 
+    gsl_linalg_LU_decomp (V, p, &s);
+    gsl_linalg_LU_solve (V, p, &b.vector, ci);
+       
+    std::vector<double> CI;
+    std::vector<double> EVAL;
+       
+    for(unsigned int i = 0; i<NumNodes_;i++){
+       double newval = gsl_vector_get(ci, i);
+       CI.push_back(newval);
+       gsl_complex eval_i
+                      = gsl_vector_complex_get (eval, i);
+       EVAL.push_back(gsl_complex_abs(eval_i));
+    } 
     //free unneeded memory
     gsl_permutation_free (p);
     gsl_eigen_nonsymmv_free (w);
-
+   
     struct Result r1;
-    r1.eval = eval->data;
-    r1.evec = evec->data;
-    r1.ci = ci->data;
+    r1.eval = EVAL;
+    r1.evec = evec_out;
+    r1.ci = CI;
     r1.energy_nodes_ = energy_nodes_;
     r1.phi_0_ = phi_0_;
-
+   
     return r1;
-}
+   }
 
 struct rho_earth_params{double theta;};
 
