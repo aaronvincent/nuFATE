@@ -57,9 +57,9 @@ void nuFATE::AllocateMemoryForMembers(unsigned int NumNodes){
     NumNodes_ = NumNodes;
     //allocate memory that will be used in functions below
     glashow_total_ = std::vector<double>(NumNodes_);
+    sigma_array_ = std::vector<double>(NumNodes_);
     glashow_partial_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     RHSMatrix_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
-    A_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     Enuin_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     Enu_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
     den_ = std::shared_ptr<double>((double *)malloc(NumNodes_*NumNodes_*sizeof(double)),free);
