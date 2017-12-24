@@ -23,9 +23,9 @@ int main(){
 
     //get_eigs() solves the cascade equation
     result = object.getEigensystem();
+
     int NumNodes;
     NumNodes = object.getNumNodes();
-
     std::vector<double> eval = result.eval;
     std::shared_ptr<double> evec = result.evec;
     std::vector<double> ci = result.ci;
@@ -43,13 +43,10 @@ int main(){
 
     std::vector<double> abs;
     std::vector<double> phi_sol;
-//Calculate earth column density for a given zenith
+
+    //Calculate earth column density for a given zenith
     t = object.getEarthColumnDensity(zenith) * Na;
-//    std::cout << t << std::endl;
     for(int i=0; i<NumNodes; i++){
-      //steps of 2i because gsl saves evals and evecs as a complex and a real piece (complex piece is 0 here)
-      //double w = *(eval+2*i);
-      //abs.push_back(exp(-t*w));
       double sum = 0.;
       for (int j=0; j<NumNodes;j++){
         abs.push_back(ci[j] * exp(-t*eval[j]));
