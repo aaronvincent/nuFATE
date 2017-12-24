@@ -195,7 +195,6 @@ void nuFATE::LoadCrossSectionFromHDF5(){
     }  else if (newflavor_ == 2){
         hsize_t sarraysize[1];
         H5LTget_dataset_info(group_id,"numuxs", sarraysize,NULL,NULL);
-        H5LTget_dataset_info(group_id,"nuexs", sarraysize,NULL,NULL);
         if(sarraysize[0] != NumNodes_)
           throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "numuxs", sigma_array_.data());
@@ -292,7 +291,7 @@ Result nuFATE::getEigensystem(){
       AddSecondaryTerms();
 
     for (unsigned int i = 0; i < NumNodes_; i++){
-        *(RHSMatrix_.get()+i*NumNodes_+i) = *(RHSMatrix_.get()+i*NumNodes_+i) + sigma_array_[i];
+        *(RHSMatrix_.get()+i*NumNodes_+i) = *(RHSMatrix_.get()+i*NumNodes_+i) - sigma_array_[i];
     }
 
     gsl_matrix_view m = gsl_matrix_view_array(RHSMatrix_.get(), NumNodes_, NumNodes_);

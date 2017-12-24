@@ -26,8 +26,9 @@ int main(){
     int NumNodes;
     NumNodes = object.getNumNodes();
 
-    double* evec = result.evec;
-    double* ci = result.ci;
+    std::vector<double> eval = result.eval;
+    std::shared_ptr<double> evec = result.evec;
+    std::vector<double> ci = result.ci;
     std::vector<double> energy_nodes = result.energy_nodes_;
 //    for(int i =0; i<NumNodes; i++){
 //      for(int j=0; j<NumNodes;j++){
@@ -45,14 +46,14 @@ int main(){
 //Calculate earth column density for a given zenith
     t = object.getEarthColumnDensity(zenith) * Na;
 //    std::cout << t << std::endl;
-    double* eval = result.eval;
     for(int i=0; i<NumNodes; i++){
       //steps of 2i because gsl saves evals and evecs as a complex and a real piece (complex piece is 0 here)
-      double w = *(eval+2*i);
-      abs.push_back(exp(-t*w));
+      //double w = *(eval+2*i);
+      //abs.push_back(exp(-t*w));
       double sum = 0.;
       for (int j=0; j<NumNodes;j++){
-        sum+= (abs[i]* *(ci+i))* *(evec+(2*i)*NumNodes+(2*j)) * std::pow(energy_nodes[i],-2) / std::pow(energy_nodes[i],-gamma);
+        abs.push_back(ci[j] * exp(-t*eval[j]));
+        sum+= abs[j] *  *(evec.get()+i*NumNodes+j) * (std::pow(energy_nodes[i],-2) / std::pow(energy_nodes[i],-gamma));
       }
       phi_sol.push_back(sum);
     }
