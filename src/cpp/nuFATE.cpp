@@ -4,8 +4,11 @@
 namespace nufate{
 
 nuFATE::nuFATE(int flavor, double gamma, std::string h5_filename, bool include_secondaries) : newflavor_(flavor), newgamma_(gamma), newh5_filename_(h5_filename), include_secondaries_(include_secondaries) {
+    //A few sanity checks
     if(include_secondaries_ and (newflavor_ == 3 or newflavor_== -3))
       throw std::runtime_error("nuFATE::nuFATE Cannot Include secondaries for tau's.");
+    if(not (newflavor_ == 3 or newflavor_ == -3 or newflavor_ == 2 or newflavor_ == -2 or newflavor_ == 1 or newflavor_ == -1))
+      throw std::runtime_error("nuFATE::nuFATE flavor has to be plus or minus 1,2,3.");
     //open h5file containing cross sections (xsh5)
     file_id_ = H5Fopen(h5_filename.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     root_id_ = H5Gopen(file_id_, "/", H5P_DEFAULT);

@@ -11,23 +11,17 @@ int main(){
 */
     int flavor = -2;
     double gamma = 2.2;
-    bool include_secondaries = true;
+    bool include_secondaries = false;
     std::string file = "/Users/wipacuser/Code/nuFATE/nuFATE/nuFATE/c++/examples/NuFATECrossSections.h5";
-
-    //Initialize an instance of the nuFATE class with these three parameters.
-
+    //Initialize an instance of the nuFATE class with these parameters.
     nufate::nuFATE object(flavor, gamma, file, include_secondaries);
-
     //Result is a struct that stores the solution to the cascade equation.
-
     nufate::Result result;
-
     //get_eigs() solves the cascade equation
     result = object.getEigensystem();
 
     int NumNodes;
     NumNodes = object.getNumNodes();
-
     std::vector<double> eval = result.eval;
     std::shared_ptr<double> evec = result.evec;
     std::vector<double> ci = result.ci;
@@ -39,11 +33,11 @@ int main(){
     double t;
     t = object.getEarthColumnDensity(zenith) * Na;
 
-    //Get Attenuation
     std::vector<double> abs;
     std::vector<double> phi_sol;
-
+    //Get Attenuation!
     if(not include_secondaries){
+      //Without Secondaries
       for(int i=0; i<NumNodes; i++){
         double sum = 0.;
         for (int j=0; j<NumNodes;j++){
@@ -52,13 +46,14 @@ int main(){
         }
         phi_sol.push_back(sum);
       }
-
+      //Print Solution
       std::cout << "Solution = " << std::endl;
       for(int i =0; i<NumNodes; i++){
         std::cout << phi_sol[i] << std::endl;
       }
 
     } else{
+      //With Secondaries
         int rsize = 2*NumNodes;
         for(int i=0; i<rsize; i++){
           double sum = 0.;
