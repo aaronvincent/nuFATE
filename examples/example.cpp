@@ -11,7 +11,7 @@ int main(){
 */
     int flavor = -2;
     double gamma = 2.2;
-    bool include_secondaries = false;
+    bool include_secondaries = true;
     std::string file = "/Users/wipacuser/Code/nuFATE/nuFATE/nuFATE/c++/examples/NuFATECrossSections.h5";
 
     //Initialize an instance of the nuFATE class with these three parameters.
@@ -27,39 +27,55 @@ int main(){
 
     int NumNodes;
     NumNodes = object.getNumNodes();
+
     std::vector<double> eval = result.eval;
     std::shared_ptr<double> evec = result.evec;
     std::vector<double> ci = result.ci;
     std::vector<double> energy_nodes = result.energy_nodes_;
-//    for(int i =0; i<NumNodes; i++){
-//      for(int j=0; j<NumNodes;j++){
-        //int i1 = 2*i;
-        //int j1 = 2*j;
-//        std::cout << *(evec+i1*NumNodes+j1) << std::endl;
-//      }
-//    }
+    std::vector<double> phi_0 = result.phi_0_;
+    //Calculate earth column density for a given zenith
     double Na = 6.0221415e23;
     double zenith = 2.2689280276;
     double t;
+    t = object.getEarthColumnDensity(zenith) * Na;
 
+    //Get Attenuation
     std::vector<double> abs;
     std::vector<double> phi_sol;
 
-    //Calculate earth column density for a given zenith
-    t = object.getEarthColumnDensity(zenith) * Na;
-    for(int i=0; i<NumNodes; i++){
-      double sum = 0.;
-      for (int j=0; j<NumNodes;j++){
-        abs.push_back(ci[j] * exp(-t*eval[j]));
-        sum+= abs[j] *  *(evec.get()+i*NumNodes+j) * (std::pow(energy_nodes[i],-2) / std::pow(energy_nodes[i],-gamma));
+    if(not include_secondaries){
+      for(int i=0; i<NumNodes; i++){
+        double sum = 0.;
+        for (int j=0; j<NumNodes;j++){
+          abs.push_back(ci[j] * exp(-t*eval[j]));
+          sum+= abs[j] *  *(evec.get()+i*NumNodes+j) * (std::pow(energy_nodes[i],-2) / std::pow(energy_nodes[i],-gamma));
+        }
+        phi_sol.push_back(sum);
       }
-      phi_sol.push_back(sum);
+
+      std::cout << "Solution = " << std::endl;
+      for(int i =0; i<NumNodes; i++){
+        std::cout << phi_sol[i] << std::endl;
+      }
+
+    } else{
+        int rsize = 2*NumNodes;
+        for(int i=0; i<rsize; i++){
+          double sum = 0.;
+          abs.clear();
+          for (int j=0; j<rsize;j++){
+            abs.push_back(ci[j] * exp(-t*eval[j]));
+            sum+= (abs[j] * *(result.evec.get()+i*rsize+j)) / phi_0[i];
+          }
+        phi_sol.push_back(sum);
+        }
+
+        //Print Solution
+        std::cout << "Solution Including secondaries= " << std::endl;
+        for(int i =0; i<NumNodes; i++){
+          std::cout << phi_sol[i] << std::endl;
+        }
     }
 
-    std::cout << "Solution = " << std::endl;
-    for(int i =0; i<NumNodes; i++){
-      std::cout << phi_sol[i] << std::endl;
-    }
-
-   return 0;
+    return 0;
 }
