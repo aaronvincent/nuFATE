@@ -61,7 +61,7 @@ class nuFATE {
     /// @param flv Position of the system.
     /// @param gamma spectral index of input flux.
     /// @param h5_filename name of hdf5 file containing the cross sections.
-    nuFATE(int flv, double gamma, std::string h5_filename);
+    nuFATE(int flv, double gamma, std::string h5_filename, bool include_secondaries);
     /// \brief Constructor
     /// @param flv Position of the system.
     /// @param gamma spectral index of input flux.
@@ -85,7 +85,7 @@ class nuFATE {
     /// \brief Function to toggle secondaries
     void setAddSecondaries(bool opt) { add_secondary_term_ = opt;}
   protected:
-    void AddSecondaryTerms();
+    void AddAdditionalTerms();
     void LoadCrossSectionFromHDF5();
     void SetCrossSectionsFromInput(std::vector<std::vector<double>> dsigma_dE);
     void SetInitialFlux();
@@ -104,6 +104,7 @@ class nuFATE {
     hid_t file_id_;
     hid_t root_id_;
     unsigned int NumNodes_;
+    unsigned int rsize_;
     double Emax_;
     double Emin_;
     int dxsdim_[2];
@@ -112,12 +113,18 @@ class nuFATE {
     std::vector<double> DeltaE_;
     std::vector<double> phi_0_;
     std::vector<double> glashow_total_;
+    std::vector<double> sig3_array_;
+    std::shared_ptr<double> glashow_partial_;
     std::shared_ptr<double> dxs_array_;
     std::shared_ptr<double> tau_array_;
+    std::shared_ptr<double> sec_array_;
+    std::shared_ptr<double> regen_array_;
     std::shared_ptr<double> RHSMatrix_;
-    std::shared_ptr<double> A_;
+    std::shared_ptr<double> RHSMatrix1_;
+    std::shared_ptr<double> RHSMatrix2_;
+    std::shared_ptr<double> RHSMatrix3_;
+    std::shared_ptr<double> RHSMatrix4_;
     std::shared_ptr<double> RHregen_;
-    std::shared_ptr<double> glashow_partial_;
     std::shared_ptr<double> Enuin_;
     std::shared_ptr<double> Enu_;
     std::shared_ptr<double> selectron_;
@@ -126,6 +133,7 @@ class nuFATE {
     std::shared_ptr<double> t2_;
     std::shared_ptr<double> t3_;
   private:
+    bool include_secondaries_ = false;
     bool memory_allocated_ = false;
     bool initial_flux_set_ = false;
     bool total_cross_section_set_ = false;
