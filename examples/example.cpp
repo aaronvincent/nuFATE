@@ -11,11 +11,12 @@ int main(){
 */
     int flavor = -2;
     double gamma = 2.2;
+    bool include_secondaries = false;
     std::string file = "/Users/wipacuser/Code/nuFATE/nuFATE/nuFATE/c++/examples/NuFATECrossSections.h5";
 
     //Initialize an instance of the nuFATE class with these three parameters.
 
-    nufate::nuFATE object(flavor, gamma, file);
+    nufate::nuFATE object(flavor, gamma, file, include_secondaries);
 
     //Result is a struct that stores the solution to the cascade equation.
 
