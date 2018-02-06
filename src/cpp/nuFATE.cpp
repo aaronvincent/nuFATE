@@ -31,8 +31,8 @@ nuFATE::nuFATE(int flavor, double gamma, std::string h5_filename, bool include_s
     SetInitialFlux();
 }
 
-nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE):
-  newflavor_(flavor), newgamma_(gamma), energy_nodes_(energy_nodes), sigma_array_(sigma_array)
+nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE, bool include_secondaries):
+  newflavor_(flavor), newgamma_(gamma), energy_nodes_(energy_nodes), sigma_array_(sigma_array), include_secondaries_(include_secondaries)
 {
   NumNodes_ = energy_nodes_.size();
   Emax_ = energy_nodes_.back();

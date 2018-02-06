@@ -30,7 +30,7 @@ CXXFLAGS= -std=c++11 -g -Wall -Wextra -Wshadow -Werror
 GSL_CFLAGS=`pkg-config gsl --cflags`
 GSL_LDFLAGS=`pkg-config gsl --libs`
 HDF5_CFLAGS=-I/usr/local/Cellar/hdf5/1.10.1_1/lib/../include
-HDF5_LDFLAGS=-L/usr/local/Cellar/hdf5/1.10.1_1/lib -lhdf5_hl -lhdf5 -L/usr/local/opt/szip/lib -lsz -lz -ldl -lm
+HDF5_LDFLAGS=-L/usr/local/Cellar/hdf5/1.10.1_1/lib -lhdf5_hl -lhdf5 -L/usr/local/opt/szip/lib  -lz -ldl -lm
 
 INCnuFATE=$(PATH_nuFATE)/include
 LIBnuFATE=$(PATH_nuFATE)/lib

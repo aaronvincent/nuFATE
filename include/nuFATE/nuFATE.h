@@ -61,6 +61,7 @@ class nuFATE {
     /// @param flv Position of the system.
     /// @param gamma spectral index of input flux.
     /// @param h5_filename name of hdf5 file containing the cross sections.
+    /// @param include_secondaries if true secondaries are added to the flux propagation.
     nuFATE(int flv, double gamma, std::string h5_filename, bool include_secondaries);
     /// \brief Constructor
     /// @param flv Position of the system.
@@ -68,7 +69,8 @@ class nuFATE {
     /// @param energy_nodes energy nodes in GeV.
     /// @param sigma_array total cross section at each energy node in cm^2.
     /// @param dsigma_dE square array of differential cross section in cm^2/GeV.
-    nuFATE(int flv, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE);
+    /// @param include_secondaries if true secondaries are added to the flux propagation.
+    nuFATE(int flv, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE, bool include_secondaries);
     /// \brief Eigensystem calculator
     Result getEigensystem();
     /// \brief Function to get Earth column density
