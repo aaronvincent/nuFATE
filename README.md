@@ -10,6 +10,7 @@ can probably be obtained from your favorite package manager:
 
 * numpy: http://www.numpy.org/
 * scipy: http://www.scipy.org/
+* tables: https://pypi.python.org/pypi/tables
 
 Recommended:
 * ipython: http://ipython.org/
