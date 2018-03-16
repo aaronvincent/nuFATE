@@ -295,7 +295,7 @@ double nuFATE_secs::rho_earth(double x, void * p){
     double RE = 6371.;
     struct rho_earth_params * params = (struct rho_earth_params *)p;
     double theta = (params->theta);
-    double xmax = 2.*abs(RE*cos(theta));
+    double xmax = 2.*std::abs(RE*cos(theta));
     double R = std::pow(RE,2) + std::pow((xmax-x),2) + 2.*RE*(xmax-x)*cos(theta);
     double r = std::pow(R,0.5);
     double p1;
@@ -352,7 +352,7 @@ double nuFATE_secs::get_t_earth(double theta){
       struct rho_earth_params params = {theta};
       F.function = &nuFATE_secs::rho_earth;
       F.params = &params;
-      double xmax = 2.*abs(REarth*cos(theta));
+      double xmax = 2.*std::abs(REarth*cos(theta));
 
       gsl_integration_qags(&F, 0, xmax, 1.0e-18, 1.0e-3, 1000, w, &result, &error);
       t = result*kmtocm;
