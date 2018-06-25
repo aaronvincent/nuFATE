@@ -5,12 +5,13 @@ import scipy.integrate as integrate
 
 REarth = 6371.  # Earth radius in km.
 
-def rho_earth(theta, x):
+def rho_earth(theta, x, d = 0):
     """ Returns the Earth density in gr/cm^3.
 
     Args:
         theta: zenith angle in radians.
         x: position along the trayectory in km.
+        d: depth under the Earth's surface. (default set to 0)
 
     Returns:
         rho: density in gr/cm^3
@@ -19,7 +20,7 @@ def rho_earth(theta, x):
     # piecewise polynomial fit to Reference earth model STW105
     # you could also load a Ref earth model if you want.
 
-    r = np.sqrt(REarth**2 + x**2 + 2. * REarth * x * np.cos(theta))
+    r = np.sqrt((REarth - d)**2 + x**2 + 2. * (REarth - d) * x * np.cos(theta))
 
     if r < 1221.:
         p1 = -0.0002177
@@ -58,23 +59,20 @@ def rho_earth(theta, x):
 
     return rho*1.0e-3 # g/cm^3.1.0e-3 conversion factor from kg/m^3 to g/cm^3
 
-
-def get_t_earth(theta):
+def get_t_earth(theta, d = 0):
     """ Returns the Earth column density for a given zenith angle.
 
     Args:
         theta: zenith angle in radians.
+        d: depth under the Earth's surface. (default set to 0)
 
     Returns:
         rho: density in g/cm^2
     """
-    xmax = 2 * np.abs(REarth * np.cos(theta))
-    if theta < np.pi/2.:
-        t = 0
-    else:
-        kmTocm = 1.0e5
-        n = lambda x: rho_earth(theta, x)  #mass density
-        t = integrate.quad(
-            lambda x: n(xmax - x), 0, xmax, epsrel=1.0e-3,
-            epsabs=1.0e-18)[0] * kmTocm  #g/cm^2
+    xmax = np.sqrt((REarth - d)**2 * np.cos(theta)**2 + d * (2 * REarth - d)) - (REarth - d) * np.cos(theta)
+    kmTocm = 1.0e5
+    n = lambda x: rho_earth(theta, x, d)  #mass density
+    t = integrate.quad(
+        lambda x: n(xmax - x), 0, xmax, epsrel=1.0e-3,
+        epsabs=1.0e-18)[0] * kmTocm  #g/cm^2
     return t
