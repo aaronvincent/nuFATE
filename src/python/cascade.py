@@ -6,7 +6,7 @@ import numpy as np
 import scipy as sp
 from numpy import linalg as LA
 
-def get_RHS_matrices(energy_nodes, sigma_array, dxs_array):
+def get_RHS_matrices(energy_nodes, sigma_array, dxs_array, ReverseTime):
     """ Returns the right hand side (RHS) matrices.
 
     Args:
@@ -24,15 +24,21 @@ def get_RHS_matrices(energy_nodes, sigma_array, dxs_array):
     DeltaE = np.diff(np.log(energy_nodes))
     RHSMatrix = np.zeros((NumNodes, NumNodes))
     # fill in diagonal terms
+    if(ReverseTime):
+        for i in range(NumNodes):  #E_out
+            for j in range(i+1, NumNodes):  #E_in
+                RHSMatrix[j][i] = DeltaE[j-1] * dxs_array[j][i] * energy_nodes[
+                    j]**-1 * energy_nodes[i]**2
+        return RHSMatrix, sigma_array
+    else:
+        for i in range(NumNodes):  #E_out
+            for j in range(i + 1, NumNodes):  #E_in
+                RHSMatrix[i][j] = DeltaE[j - 1] * dxs_array[j][i] * energy_nodes[
+                    j]**-1 * energy_nodes[i]**2
+        return RHSMatrix, sigma_array
 
-    for i in range(NumNodes):  #E_out
-        for j in range(i + 1, NumNodes):  #E_in
-            RHSMatrix[i][j] = DeltaE[j - 1] * dxs_array[j][i] * energy_nodes[
-                j]**-1 * energy_nodes[i]**2
-    return RHSMatrix, sigma_array
 
-
-def get_eigs(flavor, gamma, h5_filename):
+def get_eigs(flavor, gamma, h5_filename, ReverseTime, Efinal):
     """ Returns the eigenvalues for a given flavor, spectral index, and energy range.
 
     Args:.
@@ -83,17 +89,17 @@ def get_eigs(flavor, gamma, h5_filename):
     #Note that the solution is scaled by E**2; if you want to modify the incoming
     #spectrum a lot, you'll need to change this here, as well as in the definition of RHS.
     RHSMatrix, sigma_array = get_RHS_matrices(energy_nodes, sigma_array,
-                                              dxs_array)
+                                              dxs_array, ReverseTime)
 
     #tau regenration
     if flavor == -3:
         RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_array,
-                                       xsh5.root.tau_decay_spectrum.tbarfull[:])
+                                       xsh5.root.tau_decay_spectrum.tbarfull[:], ReverseTime)
         RHSMatrix = RHSMatrix + RHregen
 
     elif flavor == 3:
         RHregen, s1 = get_RHS_matrices(energy_nodes, sigma_array,
-                                       xsh5.root.tau_decay_spectrum.tfull[:])
+                                       xsh5.root.tau_decay_spectrum.tfull[:], ReverseTime)
         RHSMatrix = RHSMatrix + RHregen
     elif flavor == -1:
         sigma_array = sigma_array + get_glashow_total(energy_nodes)/2
@@ -105,6 +111,8 @@ def get_eigs(flavor, gamma, h5_filename):
         if phi_in.size != energy_nodes.size:
             raise Exception('Input spectrum must have the same size as the energy vector (default 200x1).')
         phi_0 = energy_nodes**2*phi_in
+    elif ReverseTime:
+        phi_0 = time_reversed_phi0(Efinal, energy_nodes)
     else:
         phi_0 = energy_nodes**(2 - gamma)
 
@@ -115,6 +123,13 @@ def get_eigs(flavor, gamma, h5_filename):
     xsh5.close()
 
     return w, v, ci, energy_nodes, phi_0
+
+def time_reversed_phi0(E, energy_nodes):
+    phi_0 = np.zeros(len(energy_nodes))
+    for x in range(len(energy_nodes)-1):
+        if(energy_nodes[x] <= E <= energy_nodes[x+1]):
+            phi_0[x] = 1.
+    return phi_0
 
 
 def get_glashow_total(energy_nodes):
