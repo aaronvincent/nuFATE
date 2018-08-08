@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("README.md") as f:
     long_description = f.read()
@@ -8,7 +8,7 @@ setup(
       version='1.0',
       description='Calculates relative attenuation of a neutrino flux through the Earth',
       long_description=long_description,
-      packages=['src/python'],
+      packages=find_packages('./src/python'),
       install_requires=['numpy', 'tables','scipy'],
       author='Aaron Vincent, Ali Kheirandish, Carlos Arguelles, Ibrahim Safa',
       url='git@github.com:aaronvincent/nuFATE.git'

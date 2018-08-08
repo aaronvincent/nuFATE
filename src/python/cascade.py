@@ -38,7 +38,7 @@ def get_RHS_matrices(energy_nodes, sigma_array, dxs_array, ReverseTime):
         return RHSMatrix, sigma_array
 
 
-def get_eigs(flavor, gamma, h5_filename, ReverseTime, Efinal):
+def get_eigs(flavor, gamma, h5_filename, ReverseTime = False, Efinal = None):
     """ Returns the eigenvalues for a given flavor, spectral index, and energy range.
 
     Args:.
