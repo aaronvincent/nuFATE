@@ -6,14 +6,15 @@ import numpy as np
 import scipy as sp
 from numpy import linalg as LA
 
-def get_RHS_matrices(energy_nodes, sigma_array, dxs_array, ReverseTime):
+def get_RHS_matrices(energy_nodes, sigma_array, dxs_array, ReverseTime=False):
     """ Returns the right hand side (RHS) matrices.
 
     Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        sigma_fname: one dimensional numpy array with total cross sections in cm**2.
-        dxs_fname: two dimensional numpy array with the differential cross section cm**2 GeV**-1.
-
+        sigma_array: one dimensional numpy array with total cross sections in cm**2.
+        dxs_array: two dimensional numpy array with the differential cross section cm**2 GeV**-1.
+        ReverseTime: Boolean. If True, solves the equations in reverse. i.e propagates the neutrino backwards
+        in time. Use with care.
     Returns:
         RHSMatrix: matrix of size n_nodes*n_nodes containing the E**2 weighted differential
                    cross sections in units of cm**2 GeV.
@@ -50,7 +51,8 @@ def get_eigs(flavor, gamma, h5_filename, ReverseTime = False, Efinal = None):
         gamma:  If gamma is a string, this is the path and file name of the input spectrum (e.g. an atmospheric flux)
                 If gamma is a number, it is used as the spectral index of the initial flux, E**-gamma.
         h5_filename: complete path and filename of the h5 object that contains the cross sections.
-
+        ReverseTime: Boolean. If True, solves the equations in reverse. i.e propagates the neutrino backwards
+        in time. Use with care.
     Returns:
         w: right hand side matrix eigenvalues in unit of cm**2.
         v: right hand side matrix normalized eigenvectors.
@@ -129,16 +131,16 @@ def time_reversed_phi0(E, energy_nodes):
     for x in range(len(energy_nodes)-1):
         if(energy_nodes[x] <= E <= energy_nodes[x+1]):
             phi_0[x] = 1.
-    return phi_0
+    return abs(phi_0)
 
 
 def get_glashow_total(energy_nodes):
     """ Returns the total nubar e --> W cross section
-        
+
         Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        
-        
+
+
         Returns:
         total cross section (cm^2)
         """
@@ -157,11 +159,11 @@ def get_glashow_total(energy_nodes):
 
 def get_glashow_partial(energy_nodes):
     """ Returns the partial d sigma/dE nubar e --> nubar e cross section
-        
+
         Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        
-        
+
+
         Returns:
         differential cross section (cm^2/GeV)
         """
