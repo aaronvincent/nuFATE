@@ -9,7 +9,8 @@ import earth
 flavor = 2  # 1,2,3 = e, mu, tau; negative sign for antiparticles
 gamma = 2.  # Power law index of isotropic flux E^-gamma
 ReverseTime = False #You want to go backwards or forward? True for backwards, false for forward in time
-Efinal = 0.5e9 #If you're going backwards in time, set the final neutrino energy you're trying to 'unfold'
+Efinal = 0.5e9 #If you're going backwards in time, set the final neutrino energy. The solution in this case returns a pdf
+               # of neutrino energies that would give you Efinal, if propagated forwards. 
 
 #gamma = 'data/phiHGextrap.dat' #This is an example Honda Gaisser atmospheric flux. You can use this or add your own file, being careful to follow the energy spacing
 
