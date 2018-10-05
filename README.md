@@ -17,6 +17,33 @@ Recommended:
 * jupyter: http://jupyter.readthedocs.io/
 * matplotlib: http://matplotlib.org/
 
+For the C++ version, you will need:
+
+* hdf5 with c bindings: http://www.hdfgroup.org/HDF5/
+* gsl (>= 1.15): http://www.gnu.org/software/gsl/
+* C++ compiler with C++11 support
+
+
+Compiling
+---------
+
+The library can be compiled by running:
+
+	make
+
+An example program demonstrating usage and functionality
+can be compiled with the command:
+
+	make examples
+
+The resulting example executables can then be found in the
+subdirectory of `examples`
+
+Finally the library can be installed using:
+
+	make install
+
+
 Example
 -------
 
@@ -26,7 +53,11 @@ The example script is called example.py. To run it do
 
 python example.py
 
-There is also an iPython notebook (notebook.ipnb) which shows some examples, including plots. This requires the "recommended" packages, above. 
+There is also an iPython notebook (notebook.ipynb) which shows some examples, including plots. This requires the "recommended" packages, above. 
+
+To run the C++ example:
+
+./example.exe
 
 Citation
 --------
