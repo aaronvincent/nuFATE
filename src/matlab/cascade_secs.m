@@ -19,7 +19,7 @@ end
 if nargin >= 3
     xsecfname = varargin{3};
 else
-    xsecfname = '../data/NuFATECrossSections.h5';
+    xsecfname = '../../resources/NuFATECrossSections.h5';
 end
 
 if flavor==-1
