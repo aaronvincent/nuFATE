@@ -27,6 +27,14 @@ For the C++ version, you will need:
 Compiling
 ---------
 
+The Python interface can be installed by simply running:
+
+  python setup.py install
+
+Without write permissions, you can install it using:
+
+  python setup.py install --user
+
 The library can be compiled by running:
 
 	make
