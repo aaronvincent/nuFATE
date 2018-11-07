@@ -34,6 +34,9 @@ def get_RHS_matrices(energy_nodes, sigma_array, dxs_array, ReverseTime=False):
     else:
         for i in range(NumNodes):  #E_out
             for j in range(i + 1, NumNodes):  #E_in
+                # Comparing with NuFate paper: multiply by E_j (= E_in) to account
+                # for log scale, then by E_i^2/E_j^2 to account for variable change
+                # phi -> E^2*phi
                 RHSMatrix[i][j] = DeltaE[j - 1] * dxs_array[j][i] * energy_nodes[
                     j]**-1 * energy_nodes[i]**2
         return RHSMatrix, sigma_array

@@ -80,6 +80,9 @@ DeltaE = diff(log(energy_nodes));
 RHSMatrix = zeros(NumNodes);
 for i = 1:NumNodes
     for j = i+1:NumNodes
+        %Comparing with NuFate paper: multiply by E_j (= E_in) to account
+        %for log scale, then by E_i^2/E_j^2 to account for variable change
+        %phi -> E^2*phi
         RHSMatrix(i,j) = DeltaE(j-1)*dsigmady(j,i)*energy_nodes(j).^-1*energy_nodes(i).^2;
     end
 end
