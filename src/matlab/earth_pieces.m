@@ -1,14 +1,19 @@
-function [x,rhobar] = earth_pieces(varargin)
+function [x,rhobar,radii] = earth_pieces(zenith,varargin)%radii to be tested
 %%input: zenith angle-theta in degrees, number of subdivisions-num 
 %%(optional, default to 10)
-%%output: list of lengths of the path in the sublayers-x, 
-%%the corresponding average densities in the sublayers-rhobar
+%%output: list of lengths of the path in the sublayers-x (in cm), 
+%%the corresponding average densities in the sublayers-rhobar(in g/cm^3)
+%%the smaller radius of the sublayer-radii (in km)
 REarth=6371.;
 
-zenith=varargin{1};
+%for test
+% zenith=92;
+% num=10;
+% nargin=1;
+
 theta=zenith/180.*pi;
 if nargin>=2
-    num=varargin{2};
+    num=varargin{1};
 else
     num=10;
 end
@@ -16,7 +21,8 @@ end
 if zenith<=90.
     x=0;
     rhobar=2.7;
-else
+    radii=0;
+else    
 
 rmin=REarth*sin(theta);
 %STW105 model, can change according to other earth models
@@ -61,7 +67,7 @@ if max(w)>0 %not constant density
     end
     nodes_div(j)=nodes(end);
 else %constant density, don't divide!
-    nodes_div=nodes;
+    nodes_div=nodes';
 end
 %%computer the average density in each sublayer
 rhobar=zeros(length(nodes_div)-1,1);
@@ -94,8 +100,10 @@ else
 end
 rhobar=rhobar(layer-1:end);
 if length(x)<2
-    x=2*x;
+    radii=nodes_div(layer-1);
 else
+    radii=nodes_div(layer-1:end-1);
+    radii=[flipud(radii);radii(2:end)];
     x=[flipud(x(2:end));2*x(1);x(2:end)]; %the order matters!
     rhobar=[flipud(rhobar);rhobar(2:end)];
 end
