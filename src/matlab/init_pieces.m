@@ -35,7 +35,8 @@ else %antineutrinos
                  '/total_cross_sections/nutaubarxs'};
     dxs_fname = '/differential_cross_sections/dxsnubar';
 end
-elossfname='../../resources/eloss_epp.h5';
+%elossfname='epp/eloss_epp.h5';
+elossfname='../../resources/eloss.h5';
 elements={'O','Si','Al','Fe','Ca','Na','K','Mg','Ni','S'};
 frac_crust=[0.467,0.277,0.08,0.05,0.03,0.03,0.03,0.02,0,0];
 frac_mantle=[0.448,0.215,0.02,0.06,0.02,0,0,0.228,0,0];
@@ -62,8 +63,11 @@ dsigma_mantle=zeros(NumNodes);
 dsigma_core=zeros(NumNodes);
 for i=1:length(elements)
     dsigma_crust=dsigma_crust+h5read(elossfname,['/epp/',elements{i}])'*frac_crust(i);
+    dsigma_crust=dsigma_crust+h5read(elossfname,['/pn/',elements{i}])'*frac_crust(i);
     dsigma_mantle=dsigma_mantle+h5read(elossfname,['/epp/',elements{i}])'*frac_mantle(i);
+    dsigma_mantle=dsigma_mantle+h5read(elossfname,['/pn/',elements{i}])'*frac_mantle(i);
     dsigma_core=dsigma_core+h5read(elossfname,['/epp/',elements{i}])'*frac_core(i);
+    dsigma_core=dsigma_core+h5read(elossfname,['/pn/',elements{i}])'*frac_core(i);
 end
 RHSMatrix_crust=get_matrices(energy_nodes,dsigma_crust);
 RHSMatrix_mantle=get_matrices(energy_nodes,dsigma_mantle);
@@ -78,9 +82,9 @@ RHSMatrix{6}=RHSMatrix_core;
 
 %tau production from nutau CC interactions
 if flavor>0
-    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaudat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstau_new.dat');
 else
-    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaubar.dat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaubar_new.dat');
 end
 RHSMatrix_43 = get_matrices(energy_nodes, dtauCC); %tau from nutau CC
 RHSMatrix{7}=RHSMatrix_43;
