@@ -82,9 +82,9 @@ RHSMatrix{6}=RHSMatrix_core;
 
 %tau production from nutau CC interactions
 if flavor>0
-    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstau_new.dat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstau.dat');
 else
-    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaubar_new.dat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaubar.dat');
 end
 RHSMatrix_43 = get_matrices(energy_nodes, dtauCC); %tau from nutau CC
 RHSMatrix{7}=RHSMatrix_43;
