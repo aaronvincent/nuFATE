@@ -1,12 +1,13 @@
-function [RHSMatrix,energy_nodes] = init_pieces(flavor,varargin)
+function [RHSMatrix,energy_nodes,energy_tau] = init_pieces(flavor,varargin)
 %%precompute the matrix element to speed up
 %%input: flavor (only specify neutrino or antineutrino),
 %%cross section file (optional)
 %%output: RHS matri elements RHSMatrix, energy nodes-energy_nodes
 
-%for test
-%  flavor=3;
-%  nargin=1;
+% for test
+%flavor=-3;
+%nargin=1;
+
 
 if flavor==0
     error(['You must specify a nonzero number for the flavor, a positive'...
@@ -16,7 +17,7 @@ end
 logemin = 3; %Min log energy (GeV) (do not touch unless you have recomputed cross sections)
 logemax = 10; % Max log E
 NumNodes = 200;
-
+NumTau = 20; %number of energy bins for tau propogation
 
 if nargin >= 2
     xsecfname = varargin{2};
@@ -35,8 +36,7 @@ else %antineutrinos
                  '/total_cross_sections/nutaubarxs'};
     dxs_fname = '/differential_cross_sections/dxsnubar';
 end
-%elossfname='epp/eloss_epp.h5';
-elossfname='../../resources/eloss.h5';
+elossfname='../../resources/eloss_20b.h5';
 elements={'O','Si','Al','Fe','Ca','Na','K','Mg','Ni','S'};
 frac_crust=[0.467,0.277,0.08,0.05,0.03,0.03,0.03,0.02,0,0];
 frac_mantle=[0.448,0.215,0.02,0.06,0.02,0,0,0.228,0,0];
@@ -44,7 +44,7 @@ frac_core=[0,0,0,0.89,0,0,0,0,0.06,0.05];
 
 energy_nodes = logspace(logemin,logemax,NumNodes);
 dsigmady = h5read(xsecfname, dxs_fname)';
-RHSMatrix_NC = get_matrices(energy_nodes,dsigmady);
+RHSMatrix_NC = get_matrices(logemin,logemax,dsigmady);
 RHSMatrix = cell(1,9);
 for i=1:3
     sigma_array = h5read(xsecfname,sigma_fname{i})';
@@ -58,9 +58,10 @@ end
 
 
 %tau energy loss in propogation
-dsigma_crust=zeros(NumNodes);
-dsigma_mantle=zeros(NumNodes);
-dsigma_core=zeros(NumNodes);
+energy_tau = logspace(logemin,logemax,NumTau);
+dsigma_crust=zeros(NumTau);
+dsigma_mantle=zeros(NumTau);
+dsigma_core=zeros(NumTau);
 for i=1:length(elements)
     dsigma_crust=dsigma_crust+h5read(elossfname,['/epp/',elements{i}])'*frac_crust(i);
     dsigma_crust=dsigma_crust+h5read(elossfname,['/pn/',elements{i}])'*frac_crust(i);
@@ -69,31 +70,35 @@ for i=1:length(elements)
     dsigma_core=dsigma_core+h5read(elossfname,['/epp/',elements{i}])'*frac_core(i);
     dsigma_core=dsigma_core+h5read(elossfname,['/pn/',elements{i}])'*frac_core(i);
 end
-RHSMatrix_crust=get_matrices(energy_nodes,dsigma_crust);
-RHSMatrix_mantle=get_matrices(energy_nodes,dsigma_mantle);
-RHSMatrix_core=get_matrices(energy_nodes,dsigma_core);
+%remove the diagonal entries which don't actually count
+dsigma_crust=dsigma_crust-diag(diag(dsigma_crust));
+dsigma_mantle=dsigma_mantle-diag(diag(dsigma_mantle));
+dsigma_core=dsigma_core-diag(diag(dsigma_core));
+RHSMatrix_crust=get_matrices(logemin,logemax,dsigma_crust);
+RHSMatrix_mantle=get_matrices(logemin,logemax,dsigma_mantle);
+RHSMatrix_core=get_matrices(logemin,logemax,dsigma_core);
 %total loss cross section
-RHSMatrix_crust=-diag(trapz(energy_nodes,dsigma_crust'))+RHSMatrix_crust;
-RHSMatrix_mantle=-diag(trapz(energy_nodes,dsigma_mantle'))+RHSMatrix_mantle;
-RHSMatrix_core=-diag(trapz(energy_nodes,dsigma_core'))+RHSMatrix_core;
+RHSMatrix_crust=-diag(trapz(energy_tau,dsigma_crust'))+RHSMatrix_crust;
+RHSMatrix_mantle=-diag(trapz(energy_tau,dsigma_mantle'))+RHSMatrix_mantle;
+RHSMatrix_core=-diag(trapz(energy_tau,dsigma_core'))+RHSMatrix_core;
 RHSMatrix{4}=RHSMatrix_crust;
 RHSMatrix{5}=RHSMatrix_mantle;
 RHSMatrix{6}=RHSMatrix_core;
 
 %tau production from nutau CC interactions
 if flavor>0
-    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstau.dat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstau_20b.dat');
 else
-    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaubar.dat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaubar_20b.dat');
 end
-RHSMatrix_43 = get_matrices(energy_nodes, dtauCC); %tau from nutau CC
+RHSMatrix_43 = get_matrices(logemin,logemax, dtauCC); %tau from nutau CC
 RHSMatrix{7}=RHSMatrix_43;
 
 %%compute tau decay branching ratios
-dndz_tau = zeros(NumNodes);
-dndz_emu = zeros(NumNodes);
-for i=1:NumNodes
-    Etau=energy_nodes(i);
+dndz_tau = zeros(NumTau,NumNodes);
+dndz_emu = zeros(NumTau,NumNodes);
+for i=1:NumTau
+    Etau=energy_tau(i);
     for j=1:NumNodes
         Enutau=energy_nodes(j);
         z=Enutau/Etau;
@@ -109,21 +114,24 @@ for i=1:NumNodes
         dndz_emu(i,j)=dndz_emu(i,j)/Etau^2;
     end
 end
-RHSMatrix_34 = get_matrices(energy_nodes, dndz_tau); %nutau from tau decay
-RHSMatrix_14 = get_matrices(energy_nodes, dndz_emu); %nue from tau decay
+RHSMatrix_34 = get_matrices(logemin,logemax, dndz_tau); %nutau from tau decay
+RHSMatrix_14 = get_matrices(logemin,logemax, dndz_emu); %nue from tau decay
 %RHSMatrix_24 = RHSMatrix_14; %numu from tau decay
 RHSMatrix{8}=RHSMatrix_34;%NA*c*ttau*rhobar/mtau is to be divided by later
 RHSMatrix{9}=RHSMatrix_14;%NA*c*ttau*rhobar/mtau is to be divided by later
 
 end
 
-function  RHSMatrix = get_matrices(energy_nodes,dsigmady)
-NumNodes = length(energy_nodes);
-DeltaE = diff(log(energy_nodes));
-RHSMatrix = zeros(NumNodes);
-for i = 1:NumNodes
-    for j = i+1:NumNodes
-        RHSMatrix(i,j) = DeltaE(j-1)*dsigmady(j,i)*energy_nodes(j).^-1*energy_nodes(i).^2;
+function  RHSMatrix = get_matrices(logemin,logemax,dsigmady)
+[NumIN,NumOUT]=size(dsigmady);
+energy_in=logspace(logemin,logemax,NumIN);
+energy_out=logspace(logemin,logemax,NumOUT);
+DeltaE = diff(log(energy_in));
+RHSMatrix = zeros(NumOUT,NumIN);
+for i = 1:NumOUT
+    for j = 2:NumIN
+        RHSMatrix(i,j) = DeltaE(j-1)*dsigmady(j,i)*energy_in(j).^-1*energy_out(i).^2;
+        %RHSMatrix(i,j) = DeltaE(j-1)*dsigmady(j,i)*energy_in(j);
     end
 end
 end

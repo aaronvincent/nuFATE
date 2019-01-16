@@ -1,4 +1,4 @@
-function [phi_1,energy_nodes] = cascade_pieces(x,rhobar,radius,phi_0,RHSMatrix,energynodes) 
+function [phi_1,energy_nodes] = cascade_pieces(x,rhobar,radius,phi_0,RHSMatrix,energynodes,energytau) 
 %%this is get_eigs
 %%regeneration bits are included here and three nus+tau are solved at the 
 %%same time. For treatment of on-the-spot decay of tau or without
@@ -20,8 +20,8 @@ nodes_earth=[0., 1221., 3480., 5721., 5961., 6347., 6356.,6368., REarth];
 Rcrust=nodes_earth(6);
 Rmantle=nodes_earth(3);
 
-% defaults:
-NumNodes = 200;
+NumNodes = length(energynodes);
+NumTau = length(energytau);
 
 [m, n] = size(phi_0);
 if m<n
@@ -29,6 +29,7 @@ if m<n
 end
 
 energy_nodes=energynodes;
+energy_tau=energytau;
 %restore matrix elements
 RHSMatrix_11=RHSMatrix{1,1};
 RHSMatrix_22=RHSMatrix{1,2};
@@ -41,7 +42,7 @@ else%core
     RHSMatrix_44=RHSMatrix{1,6};
 end
 %RHSMatrix_44=0;
-RHSMatrix_44=RHSMatrix_44-diag(mtau./(NA*c*ttau*rhobar*energy_nodes)); %tau decay
+RHSMatrix_44=RHSMatrix_44-diag(mtau./(NA*c*ttau*rhobar*energy_tau)); %tau decay
 RHSMatrix_43=RHSMatrix{1,7};
 RHSMatrix_34=RHSMatrix{1,8}*mtau/(NA*c*ttau*rhobar);
 RHSMatrix_14=RHSMatrix{1,9}*mtau/(NA*c*ttau*rhobar);
@@ -50,14 +51,11 @@ RHSMatrix_24=RHSMatrix_14;
 
 %%construct the huge RHS Matrix
 z0=zeros(NumNodes);
+z0tau=zeros(NumTau,NumNodes);
 M=[RHSMatrix_11 z0 z0 RHSMatrix_14;
    z0 RHSMatrix_22 z0 RHSMatrix_24;
    z0 z0 RHSMatrix_33 RHSMatrix_34;
-   z0 z0 RHSMatrix_43 RHSMatrix_44];
-% M=[RHSMatrix_11 z0 z0 z0;
-%    z0 RHSMatrix_22 z0 z0;
-%    z0 z0 RHSMatrix_33 RHSMatrix_34;
-%    z0 z0 RHSMatrix_43 RHSMatrix_44];
+   z0tau z0tau RHSMatrix_43 RHSMatrix_44];
 
 %phi_0 = energy_nodes.^(2-g)';
 [v,w] = eig(M);
