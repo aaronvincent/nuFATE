@@ -3,6 +3,7 @@
 #include <math.h>
 #include <cmath>
 #include <memory>
+#include <iostream>
 
 #include "hdf5.h"
 #include "hdf5_hl.h"
@@ -26,13 +27,81 @@
 namespace nufate{
 
 ///\class Result
-///\brief Simple struct to hold the results
-struct Result {
-   std::vector<double> eval;
-   std::shared_ptr<double> evec;
-   std::vector<double> ci;
-   std::vector<double> energy_nodes_;
-   std::vector<double> phi_0_;
+///\brief Simple class to hold the results.
+class Result {
+  public :
+   std::vector<double> eval;          // eigen values
+   std::shared_ptr<double> evec;      // pointer to top address of eigen vectors
+   std::vector<double> ci;            // coefficients
+   std::vector<double> energy_nodes_; // energy nodes in GeV
+   std::vector<double> phi_0_;        // initial flux * E^(pedestal_gamma)
+
+   //
+   // functions below are not used by main nuFATE program,
+   // but may be used for pybinding.
+   //
+
+   /// \brief getter for eigenvalues
+   /// @return 1D vector
+   std::vector<double> get_eigenvalues() { return eval; }
+
+   /// \brief getter for coefficients
+   /// @return 1D vector
+   std::vector<double> get_coefficients()   { return ci; }
+
+   /// \brief getter for energy nodes
+   /// @return 1D vector
+   std::vector<double> get_energy_nodes() { return energy_nodes_; }
+
+   /// \brief getter for initial flux * E^(pedestal_gamma)
+   /// @return 1D vector
+   std::vector<double> get_phi_0() { return phi_0_; }
+
+   /// \struct Square_matrix_double
+   /// \brief Very simple matrix struct
+   struct Square_matrix_double {
+     unsigned int dim_;
+     std::shared_ptr<double> evec_;
+   };
+
+   /// \brief converter from pointer of double to Square_matrix_double object
+   /// @return Square_matrix_double
+   /// dimension of eigenvectors must be NxN where
+   /// N = energy_nodes_.size()
+   Square_matrix_double get_eigenvec_matrix() { 
+      unsigned int n = energy_nodes_.size();
+      Square_matrix_double smatrix;
+      // n x n vector 
+      smatrix.dim_ = n;
+      smatrix.evec_ = evec;   
+      return smatrix;
+   }
+
+   /// \brief debug print function
+   void Print(unsigned int target_index = 0) {
+      unsigned int dim = energy_nodes_.size();
+
+      std::cout << "***** Result print *****"  << std::endl;
+      std::cout << "eigenvectors at row " << target_index << " ---"  << std::endl;
+      for (unsigned int i=target_index; i<target_index+1; ++i) {
+         for (unsigned int j=0; j<dim; ++j) {
+             std::cout << *(evec.get() + i*dim + j) << " " ;
+         }
+         std::cout << std::endl;
+      }
+
+      std::cout << std::endl;
+      std::cout << "eigenvalue at i = " << target_index << " ---"  << std::endl;
+      std::cout << eval[target_index] << std::endl;
+ 
+      std::cout << std::endl;
+      std::cout << "coefficient at i = " << target_index << " ---"  << std::endl;
+      std::cout << ci[target_index] << std::endl;
+
+      std::cout << std::endl;
+      std::cout << "energy_node at i = " << target_index << " ---"  << std::endl;
+      std::cout << energy_nodes_[target_index] << std::endl;
+   }
 };
 
 
