@@ -477,7 +477,7 @@ Result nuFATE::getEigensystem(){
     gsl_permutation_free (p);
     gsl_eigen_nonsymmv_free (w);
 
-    struct Result r1;
+    class Result r1;
     r1.eval = EVAL;
     r1.evec = evec_out;
     r1.ci = CI;
