@@ -51,6 +51,23 @@ Finally the library can be installed using:
 
 	make install
 
+Compile pybinding (nuFATEpy)
+-----------------------------
+
+To compile pybinding, cvmfs service (for icecube) is required.
+
+Also, the main nuFATE project must be installed with 'make install' command in advance.
+
+Load icecube cvmfs environment before typing make command.
+
+        eval `/cvmfs/icecube.opensciencegrid.org/py2-v3/setup.sh`
+        cd nuFATE/src/pybinding
+        make 
+
+Then, add nuFATE/src/pybinding to your PYTHONPATH to use nuFATEpy.
+
+Example script for using nuFATEpy is nuFATE/src/pybinding/example.py.
+
 
 Example
 -------
