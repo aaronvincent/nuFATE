@@ -103,4 +103,5 @@ Contributors
 - Carlos A. Arguelles
 - Ali Kheirandish
 - Ibrahim Safa
+- Kotoyo Hoshina
 
