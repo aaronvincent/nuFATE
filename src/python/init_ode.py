@@ -7,26 +7,25 @@ import numpy as np
 import scipy as sp
 from numpy import linalg as LA
 
-def init(flavor,h5_filename):
-    """ Returns the eigenvalues for a given flavor, spectral index, and energy range.
+def init(flavor,gamma,h5_filename,prefactor=1e70):
+    """ Returns the RHSMatrix (excluding density factor) for a given flavor and cross sector file
 
-    Args:.
+    Args:
         flavor: specifidies the neutrino flavor of interest. Negative numbers for
-                antineutrinos, positive numbers for neutrinos.
-                1: electron neutrino,
-                2: muon neutrino,
-                and 3: tau neutrino.
+                antineutrinos, positive numbers for neutrinos. Only sign matters.
         gamma:  If gamma is a string, this is the path and file name of the input spectrum (e.g. an atmospheric flux)
                 If gamma is a number, it is used as the spectral index of the initial flux, E**-gamma.
         h5_filename: complete path and filename of the h5 object that contains the cross sections.
+        prefactor: a factor added to the initial fluxes to aviod negative solution at very large zenith angles, default 1e70
 
     Returns:
-        w: right hand side matrix eigenvalues in unit of cm**2.
-        v: right hand side matrix normalized eigenvectors.
-        ci: coordinates of the input spectrum in the eigensystem basis.
-        energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
         phi_0: E^2 * input spectrum.
+        RHSMatrix: three dimensional numpy array with the differential cross section cm**2 GeV**-1, prepared by the init_ode module (which contains the right-hand-side matices excluding density factor).
+        energy_nodes: one dimensional numpy array containing the energy nodes of neutrinos in GeV.
+        energy_tau: one dimensional numpy array containing the energy nodes of tau in GeV.
     """
+    
+    
     xsh5 = tables.open_file(h5_filename,"r")
     logemax = np.log10(xsh5.root.total_cross_sections._v_attrs.max_energy)
     logemin = np.log10(xsh5.root.total_cross_sections._v_attrs.min_energy)
@@ -34,16 +33,29 @@ def init(flavor,h5_filename):
     energy_nodes = np.logspace(logemin, logemax, NumNodes)
     NumTau = 200
     dlg = (logemax - logemin)/(NumTau - 1);
-    Ei=np.logspace(logemin - dlg/2,logemax + dlg/2,NumTau + 1);
+    Ei=np.logspace(logemin - dlg/2,logemax + dlg/2,NumTau + 1)
+    energy_tau = np.logspace(logemin, logemax, NumTau)    
 
+    # Select initial condition: if gamma is string, load file, otherwise use power law E^-gamma
+    if type(gamma) == str:
+        phi_in = np.loadtxt(gamma)
+        if phi_in.size != 3*energy_nodes.size+energy_tau.size:
+            raise Exception('Input spectrum must have the same size as the energy vector (default 800x1).')
+        phi_0 = np.concatenate((np.concatenate((energy_nodes,energy_nodes,energy_nodes), axis=0)**2*phi_in[0:3*NumNodes],energy_tau**2*phi_in[3*NumNodes:]),axis=0)
+    else:
+        phi_nu = energy_nodes**(2 - gamma)
+        phi_0 = np.concatenate((phi_nu, phi_nu, phi_nu, np.zeros(NumTau)),axis=0)
+    phi_0 = phi_0*prefactor
 
     RHSMatrix = np.zeros((9, NumNodes, NumNodes))
     if flavor > 0:
         dxs_array = xsh5.root.differential_cross_sections.dxsnu[:]
-    else:
+    elif flavor < 0:
         dxs_array = xsh5.root.differential_cross_sections.dxsnubar[:]
+    else:
+        raise Exception('Input flavor must be nonzero, positive for neutrinos and negative for antineutrinos.')
     #Note that the solution is scaled by E**2; if you want to modify the incoming
-    #spectrum a lot, you'll need to change this here, as well as in the definition of RHS.
+    #spectrum a lot, you'll need to change this here, as well as in the definition of RHS, or modify the prefactor
     RHSMatrix_NC = get_matrices(energy_nodes, energy_nodes, dxs_array)
 
     for i in range(1,4):
@@ -77,7 +89,6 @@ def init(flavor,h5_filename):
     frac_core = np.array([0,0,0,0.89,0,0,0,0,0.06,0.05])
 
     #tau energy loss in propogation
-    energy_tau = np.logspace(logemin, logemax, NumTau)
     dsigma_crust = np.zeros((NumTau, NumTau))
     dsigma_mantle = np.zeros((NumTau, NumTau))
     dsigma_core = np.zeros((NumTau, NumTau));
@@ -145,7 +156,7 @@ def init(flavor,h5_filename):
     RHSMatrix[7,:,:] = RHSMatrix_34 #NA*c*ttau*rhobar/mtau is to be divided by later
     RHSMatrix[8,:,:] = RHSMatrix_14 #NA*c*ttau*rhobar/mtau is to be divided by later
     
-    return RHSMatrix, energy_nodes, energy_tau
+    return phi_0, RHSMatrix, energy_nodes, energy_tau
 
 def get_matrices(energy_in, energy_out, dxs_array):
     """ Returns the right hand side (RHS) matrices.
