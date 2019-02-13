@@ -1,4 +1,4 @@
-function [RHSMatrix,energy_nodes,energy_tau] = init_pieces(flavor,varargin)
+function [RHSMatrix,energy_nodes,energy_tau] = init_ode(flavor,varargin)
 %%precompute the matrix element to speed up
 %%input: flavor (only specify neutrino or antineutrino),
 %%cross section file (optional)
@@ -21,13 +21,13 @@ NumNodes = 200;
 
 
 NumTau=200;
-dlg=(logemax-logemin)/(NumTau-1.);
+dlg=(logemax-logemin)/(NumTau-1);
 Ei=logspace(logemin-dlg/2,logemax+dlg/2,NumTau+1);
 
 if nargin >= 2
     xsecfname = varargin{2};
 else
-    xsecfname = '../../../resources/NuFATECrossSections.h5';
+    xsecfname = '../../resources/NuFATECrossSections.h5';
 end
 %get cross section locations
 if flavor>0 %neutrinos
@@ -41,7 +41,7 @@ else %antineutrinos
                  '/total_cross_sections/nutaubarxs'};
     dxs_fname = '/differential_cross_sections/dxsnubar';
 end
-elossfname='../../../resources/eloss.h5';
+elossfname='../../resources/eloss.h5';
 elements={'O','Si','Al','Fe','Ca','Na','K','Mg','Ni','S'};
 %atomic number
 A=[16,28,27,56,40,23,39,24,58.7,32];
@@ -63,6 +63,8 @@ for i=1:3
     end
 end
 
+sig_glashow=get_glashow_total(energy_nodes);
+dxssig_glashow=get_glashow_partial(energy_nodes);
 
 %tau energy loss in propogation
 energy_tau = logspace(logemin,logemax,NumTau);
@@ -98,9 +100,9 @@ RHSMatrix{6}=RHSMatrix_core;
 
 %tau production from nutau CC interactions
 if flavor>0
-    dtauCC=load('../../../resources/CT14/differential_cross_sections/dxstau.dat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstau.dat');
 else
-    dtauCC=load('../../../resources/CT14/differential_cross_sections/dxstaubar.dat');
+    dtauCC=load('../../resources/CT14/differential_cross_sections/dxstaubar.dat');
 end
 RHSMatrix_43 = get_matrices(energy_nodes,energy_tau, dtauCC);
 RHSMatrix{7}=RHSMatrix_43;
@@ -188,8 +190,10 @@ den = (1-selectron/MW^2).^2 + GW^2/MW^2;
 t1 = gR^2./(1.+y.*selectron/MZ^2).^2;
 t2 = gL./(1.+y.*selectron./MZ^2) + (1-selectron/MW^2)./den;
 t3 = GW/MW./den;
-dsig = GF^2*selectron/pi.*(t1 + (t2.^2+t3.^2).*(1-y).^2)*hbarc^2.*heaviside(y);
-dsig = dsig.*(1-y)./Enuin; %dy --> d\tilde E
+%dsig = GF^2*selectron/pi.*(t1 + (t2.^2+t3.^2).*(1-y).^2)*hbarc^2.*heaviside(y);
+%dsig = dsig.*(1-y)./Enuin; %dy --> d\tilde E
+dsig = GF^2*selectron/pi.*(t1 + (t2.^2+t3.^2).*(1-y).^2)*hbarc^2.*heavi(y);
+dsig = dsig./Enuin;
 end
 
 function dndz = dntaudE(z,channel,pol)
@@ -232,4 +236,19 @@ end
 function dndz = dnnottaudE(z)
 %nue or numu from tau decay
 dndz = 0.18*(4.0-12.*z+12.*z^2-4.*z^3);
+end
+
+
+function he = heavi(y)
+he = zeros(size(y));
+[m,n]=size(y);
+for i=1:m
+    for j=1:n
+        if y(i,j)>=0
+            he(i,j)=1;
+        else
+            he(i,j)=0;
+        end
+    end
+end
 end

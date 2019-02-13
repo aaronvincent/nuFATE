@@ -41,6 +41,9 @@ def get_RHS_matrices(energy_nodes, sigma_array, sig3_array, dxs_array, sec_array
     #matrix 1: nue or numu NC:
     for i in range(NumNodes):  #E_out
         for j in range(i + 1, NumNodes):  #E_in
+            # Comparing with NuFate paper: multiply by E_j (= E_in) to account
+            # for log scale, then by E_i^2/E_j^2 to account for variable change
+            # phi -> E^2*phi
             RHSMatrix1[i][j] = DeltaE[j - 1] * dsigmady[j][i] * energy_nodes[
                 j]**-1 * energy_nodes[i]**2
 
@@ -153,11 +156,11 @@ def get_eigs(flavor, gamma, h5_filename):
 
 def get_glashow_total(energy_nodes):
     """ Returns the total nubar e --> W cross section
-        
+
         Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        
-        
+
+
         Returns:
         total cross section (cm^2)
     """
@@ -176,11 +179,11 @@ def get_glashow_total(energy_nodes):
 
 def get_glashow_partial(energy_nodes):
     """ Returns the partial d sigma/dE nubar e --> nubar e cross section
-        
+
         Args:
         energy_nodes: one dimensional numpy array containing the energy nodes in GeV.
-        
-        
+
+
         Returns:
         differential cross section (cm^2/GeV)
     """
@@ -204,5 +207,3 @@ def get_glashow_partial(energy_nodes):
     dsig = GF**2*selectron/np.pi*(t1 + (t2**2+t3**2)*(1-y)**2)*hbarc**2*heaviside
     dsig = dsig/Enuin #dy --> dE
     return dsig
-
-
