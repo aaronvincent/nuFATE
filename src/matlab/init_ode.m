@@ -4,11 +4,6 @@ function [RHSMatrix,energy_nodes,energy_tau] = init_ode(flavor,varargin)
 %%cross section file (optional)
 %%output: RHS matri elements RHSMatrix, energy nodes-energy_nodes
 
-% for test
-%flavor=-3;
-%nargin=1;
-
-
 if flavor==0
     error(['You must specify a nonzero number for the flavor, a positive'...
     ' number for neutrinos or a negtive number for antineutrinos']);
@@ -62,9 +57,6 @@ for i=1:3
             + get_glashow_partial(energy_nodes)/2;
     end
 end
-
-sig_glashow=get_glashow_total(energy_nodes);
-dxssig_glashow=get_glashow_partial(energy_nodes);
 
 %tau energy loss in propogation
 energy_tau = logspace(logemin,logemax,NumTau);
@@ -142,7 +134,6 @@ RHSMatrix = zeros(NumOUT,NumIN);
 for i = 1:NumOUT
     for j = 2:NumIN
         RHSMatrix(i,j) = DeltaE(j-1)*dsigmady(j,i)*energy_in(j).^-1*energy_out(i).^2;
-        %RHSMatrix(i,j) = DeltaE(j-1)*dsigmady(j,i)*energy_in(j);
     end
 end
 end
@@ -190,8 +181,6 @@ den = (1-selectron/MW^2).^2 + GW^2/MW^2;
 t1 = gR^2./(1.+y.*selectron/MZ^2).^2;
 t2 = gL./(1.+y.*selectron./MZ^2) + (1-selectron/MW^2)./den;
 t3 = GW/MW./den;
-%dsig = GF^2*selectron/pi.*(t1 + (t2.^2+t3.^2).*(1-y).^2)*hbarc^2.*heaviside(y);
-%dsig = dsig.*(1-y)./Enuin; %dy --> d\tilde E
 dsig = GF^2*selectron/pi.*(t1 + (t2.^2+t3.^2).*(1-y).^2)*hbarc^2.*heavi(y);
 dsig = dsig./Enuin;
 end

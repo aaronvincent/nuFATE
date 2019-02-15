@@ -1,17 +1,15 @@
 %ODE examples for matlab
-clear all
-close all
 
 %% get the spectrum for a single direction
 g = 2; %spectral index
 flav = -1; %plus(minus) sign for (anti)neutrinos, only sign matters
-zenith = 130; %choose a zenith.
+zenith = 120; %choose a zenith.
 
 E = logspace(3,10,500);
 
-%prefactor to avoid negative solutions, absent to use default value 1e60
+%prefactor to avoid negative solutions, absent to use default value 1e70
 prefactor = 1e70;
-%relative error of the solutions, absent to use default value 1e-4
+%relative error of the solutions, absent to use default value 1e-3
 relerr = 1e-3;
 [nuesol,numusol,nutausol,tausol]=get_att_ode(flav,g,zenith,E',prefactor,relerr);
 

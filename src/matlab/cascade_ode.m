@@ -10,7 +10,7 @@ function phi_1 = cascade_ode(theta,phi_0,RHSMatrix,energynodes,energytau,varargi
 if nargin > 5
     relerr = varargin{1};
 else %default
-    relerr = 1e-4;
+    relerr = 1e-3;
 end
 REarth=6371.;%radius of the Earth
 [m, n] = size(phi_0);
@@ -21,8 +21,6 @@ energy_nodes = energynodes;
 energy_tau = energytau;
 xmax=2*REarth*cos(theta)*1e5;%in cm
 odefun=@(x,phi) getdphidx(theta,x,phi,RHSMatrix,energy_nodes,energy_tau)*phi;
-%phi=ones(800,1);
-%test=getdphidx(theta,xmax/2,ones(800,1),RHSMatrix,energy_nodes,energy_tau)*phi;
 options=odeset('RelTol',relerr,'NonNegative',1,...
     'Jacobian',@(x,phi) getdphidx(theta,x,phi,RHSMatrix,energy_nodes,energy_tau));
 [~,phisol]=ode15s(odefun,[0,xmax],phi_0,options);
@@ -34,7 +32,6 @@ NA = 6.02e+23; %Avogadro's constant
 c = 3.e+10; %speed of light in cm/s
 mtau = 1.777; %tau mass in GeV
 ttau = 2.906e-13; %tau lifetime in rest frame in s
-%ttau = 100;
 %define crust, mantle and core, it depends on the modeling of the Earth
 REarth=6371.*1e5;%radius of the Earth in cm
 nodes_earth=[0., 1221., 3480., 5721., 5961., 6347., 6356.,6368., REarth]*1e5;

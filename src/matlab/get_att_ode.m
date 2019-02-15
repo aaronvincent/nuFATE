@@ -19,14 +19,14 @@ phi_nu = energy_nodes.^(2-g)';
 if nargin > 4
     prefactor = varargin{1};
 else %default
-    prefactor = 1e60;
+    prefactor = 1e70;
 end
 
 
 if nargin > 5
     relerr = varargin{2};
 else %default
-    relerr = 1e-4;
+    relerr = 1e-3;
 end
 
 phi_0 = [phi_nu; phi_nu; phi_nu; zeros(NumTau,1)]*prefactor;
