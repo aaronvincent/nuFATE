@@ -36,4 +36,4 @@ for i in range(10) :
     e_vec = (r.eigenvectors())[index]
     assert (eigenvec == e_vec), "eigenvector didn't match"
 
-
+print "test 1 passed!"
