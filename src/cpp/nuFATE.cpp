@@ -211,10 +211,15 @@ void nuFATE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<d
 
     } else{
       for(unsigned int i = 0; i < NumNodes_; i++){
-        for(unsigned int j= i+1; j < NumNodes_; j++){
-          double e1 = 1./ energy_nodes_[j];
-          double e2 = energy_nodes_[i] * energy_nodes_[i];
-          *(RMatrix.get()+i*NumNodes_+j) = DeltaE_[j - 1] * *(dxsarray.get()+j * dxsdim_[1]+i) * e1 * e2;
+        //for(unsigned int j= i+1; j < NumNodes_; j++){ // this doesn't initialize lower triangle of RMatrix
+        for(unsigned int j= 0; j < NumNodes_; j++){
+          double value = 0;
+          if (j>i) {
+            double e1 = 1./ energy_nodes_[j];
+            double e2 = energy_nodes_[i] * energy_nodes_[i];
+            value = DeltaE_[j - 1] * *(dxsarray.get()+j * dxsdim_[1]+i) * e1 * e2;
+          }
+          *(RMatrix.get()+i*NumNodes_+j) = value;
         }
       }
     }
