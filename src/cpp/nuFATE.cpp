@@ -45,6 +45,10 @@ nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::
   SetEnergyBinWidths();
   SetInitialFlux();
   SetCrossSectionsFromInput(dsigma_dE);
+  // for NuEBar: sigma_array_ will be modified in AddAdditionalTerms() function then we need to keep 
+  // original total cross section.
+  sigma_array_orig_ = sigma_array_;
+  total_cross_section_set_ = true;
 }
 
 void nuFATE::SetCrossSectionsFromInput(std::vector<std::vector<double>> dsigma_dE){
@@ -52,7 +56,6 @@ void nuFATE::SetCrossSectionsFromInput(std::vector<std::vector<double>> dsigma_d
         for(unsigned int j=0; j<NumNodes_; j++)
         *(dxs_array_.get()+i*NumNodes_+j) = dsigma_dE[i][j];
     }
-    total_cross_section_set_ = true;
     differential_cross_section_set_ = true;
 }
 
@@ -269,6 +272,10 @@ void nuFATE::LoadCrossSectionFromHDF5(){
         H5LTread_dataset_double(group_id, "nutauxs", sigma_array_.data());
     }
 
+    // for NuEBar: sigma_array_ will be modified in AddAdditionalTerms() function then we need to keep 
+    // original total cross section.
+    sigma_array_orig_ = sigma_array_;
+
     hsize_t dxarraysize[2];
     group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);
    if (newflavor_ > 0){
@@ -406,7 +413,7 @@ void nuFATE::AddAdditionalTerms(){
 
         } else{
             for (unsigned int i = 0; i < NumNodes_; i++){
-              sigma_array_[i] = sigma_array_[i] + glashow_total_[i]/2.;
+              sigma_array_[i] = sigma_array_orig_[i] + glashow_total_[i]/2.;
               for(unsigned int j=0; j<NumNodes_;j++){
                 *(RHSMatrix_.get() +i*NumNodes_+j) = *(RHSMatrix_.get() +i*NumNodes_+j) + *(glashow_partial_.get() + i*NumNodes_+j)/2.;
               }

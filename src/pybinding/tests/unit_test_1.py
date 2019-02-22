@@ -3,7 +3,7 @@ import nuFATEpy as nuf
 import numpy as np
 import sys
 
-flavor_id = 2
+flavor_id = -1 
 gamma_index = 2.2
 h5_filename = "../../../resources/NuFATECrossSections.h5"
 include_secondaries = False

@@ -181,6 +181,7 @@ class nuFATE {
     int dxsdim_[2];
     std::vector<double> energy_nodes_;
     std::vector<double> sigma_array_;
+    std::vector<double> sigma_array_orig_;
     std::vector<double> DeltaE_;
     std::vector<double> phi_0_;
     std::vector<double> glashow_total_;
