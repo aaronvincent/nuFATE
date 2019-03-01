@@ -104,7 +104,7 @@ The flavor_id must be one of the integer numbers list below.
 
 NuEBar, NuTau and NuTauBar may generate neutrinos with other particle types due to Glashow Resonance or Tau regeneration process. There are some restrictions in these cases as noted below.
 
-#### NuEBar
+### NuEBar
 
 NuEBar may have Glashow Resonance interaction and the outgoing neutrinos from W- decay could be any flavor.
 NuFATE takes into account of only one case of them: the NuEBar + e- -> (W-) -> e- + NuEBar. In other words, there is no function to get the arrival flux from NuEBar to NuMuBar or NuTauBar. To estimate these contributions, use nuSQuIDS.
@@ -112,7 +112,7 @@ NuFATE takes into account of only one case of them: the NuEBar + e- -> (W-) -> e
 Cross sections of Glashow Resonance is hard coded in programs.
 
 
-#### NuTau and NuTauBar
+### NuTau and NuTauBar
 
 NuTau and NuTauBar may generate tau via CC interaction, and the tau may decay into any flavor:
 
@@ -124,7 +124,7 @@ With nuFATE Mode 1, the result attenuation ratio includes regeneration from NuTa
 
 To calculate attenuation ratio of NuE(NuEBar) or NuMu(NuMuBar) with contribution from NuTau's regeneration effect, use cascade_sec.py for python mode or activate "include_secondaries" option in constructor of c++ version. Allowed flavor_ids are -1, 1, -2, and 2.  As mentioned above, with this mode (Mode 2) initial flux is assumed to be 1:1:1:1:1:1 for all particle types.
 
-*Example: Calculate NuEBar's attenuation ratio with NuTau's regeneration effect (Mode 2):*
+**Example: Calculate NuEBar's attenuation ratio with NuTau's regeneration effect (Mode 2):**
 
 Set flavor_id as -1, and give initial flux (which is same for all flavors).  
 The obtained attenuation ratio has a length of 2N, where N is size of energy_nodes. The first half of the attenuation ratio is for the NuEBar with respect to initial NuEBar flux.  
@@ -134,7 +134,7 @@ The second half of attenuation ratio gives NuTauBar's attenuation, and that is s
 Format of cross sections
 ------------------------
 
-#### Format of NuFATECrossSections.h5
+### Format of NuFATECrossSections.h5
 
 Total cross sections must be charged-current(CC) + neutral-current(NC) cross sections as a function of neutrino energy.
 Unit for energy is GeV and for cross sections is cm^2.
@@ -159,7 +159,7 @@ Here is the details of each component. () represents shape of matrices, N repres
 - **tau_decay_spectrum_secbarfull (200,200)** : NuTauBar -> taubar -> e+ + NuE or mu+ + NuMu. The first axis is for primary NuTauBar energy and the second axis is for NuE or NuMu energy.
 
 
-#### Format of text-based cross sections
+### Format of text-based cross sections
 NuFATE accepts text-based cross section files in format of nuSQuIDS cross section.
 Currently NuTau regeneration is not supported yet for text-based cross sections. 
 
@@ -167,13 +167,13 @@ Format of Total cross section file must have 7 column and N rows where N = numbe
 Energies must be in GeV and cross sections(Xsec) must be in cm^2.  
 Cross section files are separated for CC interaction and NC interaction.
 
-**Energy NuE_Xsec NuEBar_Xsec NuMu_Xsec NuMuBar_Xsec NuTau_Xsec NuTauBar_Xsec**
+- Energy  NuE_Xsec  NuEBar_Xsec  NuMu_Xsec  NuMuBar_Xsec  NuTau_Xsec  NuTauBar_Xsec
 
 NuFATE uses dsigma/dE differential cross section for NC interaction.  
 Format of  cross section file must have 8 column and N rows where N = number of energy bins.  
 Energies must be in GeV and cross sections(Xsec) must be in cm^2.
 
-**Energy_in Energy_out NuE_Xsec NuEBar_Xsec NuMu_Xsec NuMuBar_Xsec NuTau_Xsec NuTauBar_Xsec**
+- Energy_in Energy_out NuE_Xsec NuEBar_Xsec NuMu_Xsec NuMuBar_Xsec NuTau_Xsec NuTauBar_Xsec
 
 
 
