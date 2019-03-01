@@ -49,13 +49,13 @@ struct VecToList
 // converting Result::Square_matrix_double object to python list (NxN dimension)
 struct VecToList2D 
 {
-   static PyObject* convert( const Result::Square_matrix_double &vec) {
-      unsigned int dim = vec.dim_;
+   static PyObject* convert( const Square_matrix_double &vec) {
+      unsigned int n = vec.n_;
       boost::python::list* l = new boost::python::list();
-      for (unsigned int i = 0; i < dim; i++) {
+      for (unsigned int i = 0; i < n; i++) {
          boost::python::list* ll = new boost::python::list();
-         for (unsigned int j = 0; j<dim; j++) { 
-            double val = *(vec.evec_.get() + i*dim + j);
+         for (unsigned int j = 0; j<n; j++) { 
+            double val = *(vec.vec_.get() + i*n + j);
             (*ll).append(val);
          }
          (*l).append(*ll);
@@ -69,7 +69,7 @@ struct VecToList2D
 BOOST_PYTHON_MODULE(nuFATEpy)
 {
   to_python_converter< std::vector<double, class std::allocator<double> >, VecToList<double> > ();
-  to_python_converter< Result::Square_matrix_double, VecToList2D> ();
+  to_python_converter< Square_matrix_double, VecToList2D> ();
 
   class_<Result>("Result")
     .def(init<>())
@@ -84,12 +84,16 @@ BOOST_PYTHON_MODULE(nuFATEpy)
   class_<nuFATE, boost::noncopyable, std::shared_ptr<nuFATE> >("nuFATE",no_init)
     .def(init<int, double, std::string, bool>(args("flavor_id","gamma_index","h5_filename","include_secondaries")))
     .def(init<int, double, std::vector<double>, std::vector<double>, std::vector<std::vector<double> >, bool>(args("flavor_id","gamma_index","energy_nodes","sigma_array","dsigma_dE","include_secondaries")))
+    .def(init<int, double, std::string, std::string, std::string, bool>(args("flavor_id","gamma_index","cc_sigma_file","nc_sigma_file","nc_dsigma_dE_file","include_secondaries")))
     .def("get_eigensystem", &nuFATE::getEigensystem)
     .def("get_earth_column_density", &nuFATE::getEarthColumnDensity, arg("zenith"))
     .def_readonly("flavor", &nuFATE::getFlavor)
     .def_readonly("gamma", &nuFATE::getGamma)
     .def_readonly("numnodes", &nuFATE::getNumNodes)
     .def("set_add_secondaries",&nuFATE::setAddSecondaries, arg("opt"))
+    .def("energy_nodes",&nuFATE::getEnergyNodes)
+    .def("total_crosssections",&nuFATE::getTotalCrossSections)
+    .def("nc_differential_crosssections",&nuFATE::getNCDifferentialCrossSections)
   ;
 
 }

@@ -1,5 +1,7 @@
 #include "nuFATE.h"
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 namespace nufate{
 
@@ -32,8 +34,92 @@ nuFATE::nuFATE(int flavor, double gamma, std::string h5_filename, bool include_s
 }
 
 nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE, bool include_secondaries):
-  newflavor_(flavor), newgamma_(gamma), energy_nodes_(energy_nodes), sigma_array_(sigma_array), include_secondaries_(include_secondaries)
+  newflavor_(flavor), include_secondaries_(include_secondaries)
 {
+  Init(gamma, energy_nodes, sigma_array, dsigma_dE);
+}
+
+nuFATE::nuFATE(int flavor, double gamma, std::string cc_sigma_file, std::string nc_sigma_file, std::string nc_dsigma_file, bool include_secondaries):
+  newflavor_(flavor), newgamma_(gamma), include_secondaries_(include_secondaries)
+{
+  unsigned int flavor_index = 0;
+  switch (flavor) {
+     case 1 : flavor_index = 0; break;
+     case -1 : flavor_index = 1; break;
+     case 2 : flavor_index = 2; break;
+     case -2 : flavor_index = 3; break;
+     case 3 : flavor_index = 4; break;
+     case -3 : flavor_index = 5; break;
+  }
+
+  // load cc_sigma_file (charge current total crossection)
+  std::ifstream incc(cc_sigma_file.c_str());
+  if (incc.fail())
+     throw std::runtime_error("nuFATE::nuFATE failed to open CC total cross section file");
+
+  std::string str;
+  double ene;
+  double xs[6];
+  std::vector<double> energy_nodes;
+  std::vector<double> sigma_cc;
+  while (getline(incc, str)) {
+     std::stringstream ss;
+     ss << str;
+     ss >> ene >> xs[0] >> xs[1] >> xs[2] >> xs[3] >> xs[4] >> xs[5];
+     energy_nodes.push_back(ene);
+     sigma_cc.push_back(xs[flavor_index]);
+  }
+  NumNodes_ = energy_nodes.size();
+
+  // load nc_sigma_file (neutral current total crossection)
+  std::vector<double> sigma_nc;
+  std::ifstream innc(nc_sigma_file.c_str());
+  if (innc.fail())
+     throw std::runtime_error("nuFATE::nuFATE failed to open NC total cross section file");
+
+  while (getline(innc, str)) {
+     std::stringstream ss;
+     ss << str;
+     ss >> ene >> xs[0] >> xs[1] >> xs[2] >> xs[3] >> xs[4] >> xs[5];
+     sigma_nc.push_back(xs[flavor_index]);
+  }
+
+  if (sigma_cc.size() != sigma_nc.size()) 
+     throw std::runtime_error("nuFATE::nuFATE size of cc_sigma_file and nc_sigma_size don't match.");
+
+  // save cc+nc as total xsec
+  std::vector<double> sigma_array;
+  sigma_array.resize(NumNodes_);
+  for (unsigned int i=0; i<NumNodes_; ++i) {
+     sigma_array[i] = sigma_cc[i] + sigma_nc[i]; 
+  }
+
+  // load dsigma_dE_file (dSigma_NC/dE single-differential cross section)
+  std::ifstream in(nc_dsigma_file.c_str());
+  if (in.fail())
+     throw std::runtime_error("nuFATE::nuFATE failed to open differential cross section file");
+
+  std::vector<std::vector<double> > dsigma_dE;
+  double enein, eneout;
+  for (unsigned int i=0; i<NumNodes_; ++i) {
+     std::vector<double> buf;
+     for (unsigned int j=0; j<NumNodes_; ++j) {
+        getline(in, str);
+        std::stringstream ss;
+        ss << str;
+        ss >> enein >> eneout >> xs[0] >> xs[1] >> xs[2] >> xs[3] >> xs[4] >> xs[5];
+        buf.push_back(xs[flavor_index]);
+     }
+     dsigma_dE.push_back(buf);
+  }
+
+  Init(gamma, energy_nodes, sigma_array, dsigma_dE);
+}
+
+void nuFATE::Init(double gamma, const std::vector<double> &energy_nodes, const std::vector<double> &sigma_array, const std::vector<std::vector<double> > &dsigma_dE) 
+{
+  newgamma_ = gamma;
+  energy_nodes_ = energy_nodes;
   NumNodes_ = energy_nodes_.size();
   Emax_ = energy_nodes_.back();
   Emin_ = energy_nodes_.front();
@@ -44,14 +130,16 @@ nuFATE::nuFATE(int flavor, double gamma, std::vector<double> energy_nodes, std::
   AllocateMemoryForMembers(NumNodes_);
   SetEnergyBinWidths();
   SetInitialFlux();
-  SetCrossSectionsFromInput(dsigma_dE);
+  SetCrossSectionsFromInput(sigma_array, dsigma_dE);
 }
 
-void nuFATE::SetCrossSectionsFromInput(std::vector<std::vector<double>> dsigma_dE){
+void nuFATE::SetCrossSectionsFromInput(const std::vector<double> &sigma_array, const std::vector<std::vector<double>> &dsigma_dE){
     for(unsigned int i = 0; i<NumNodes_; i++){
         for(unsigned int j=0; j<NumNodes_; j++)
         *(dxs_array_.get()+i*NumNodes_+j) = dsigma_dE[i][j];
     }
+    sigma_array_ = sigma_array;
+    sigma_array_orig_ = sigma_array;
     total_cross_section_set_ = true;
     differential_cross_section_set_ = true;
 }
@@ -211,10 +299,15 @@ void nuFATE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<d
 
     } else{
       for(unsigned int i = 0; i < NumNodes_; i++){
-        for(unsigned int j= i+1; j < NumNodes_; j++){
-          double e1 = 1./ energy_nodes_[j];
-          double e2 = energy_nodes_[i] * energy_nodes_[i];
-          *(RMatrix.get()+i*NumNodes_+j) = DeltaE_[j - 1] * *(dxsarray.get()+j * dxsdim_[1]+i) * e1 * e2;
+        //for(unsigned int j= i+1; j < NumNodes_; j++){ // this doesn't initialize lower triangle of RMatrix
+        for(unsigned int j= 0; j < NumNodes_; j++){
+          double value = 0;
+          if (j>i) {
+            double e1 = 1./ energy_nodes_[j];
+            double e2 = energy_nodes_[i] * energy_nodes_[i];
+            value = DeltaE_[j - 1] * *(dxsarray.get()+j * dxsdim_[1]+i) * e1 * e2;
+          }
+          *(RMatrix.get()+i*NumNodes_+j) = value;
         }
       }
     }
@@ -263,6 +356,10 @@ void nuFATE::LoadCrossSectionFromHDF5(){
           throw std::runtime_error("nuFATE::LoadCrossSectionFromHDF5 Total cross section array does not match number of energy nodes.");
         H5LTread_dataset_double(group_id, "nutauxs", sigma_array_.data());
     }
+
+    // for NuEBar: sigma_array_ will be modified in AddAdditionalTerms() function then we need to keep 
+    // original total cross section.
+    sigma_array_orig_ = sigma_array_;
 
     hsize_t dxarraysize[2];
     group_id = H5Gopen(root_id_, grpdiff_.c_str(), H5P_DEFAULT);
@@ -401,7 +498,7 @@ void nuFATE::AddAdditionalTerms(){
 
         } else{
             for (unsigned int i = 0; i < NumNodes_; i++){
-              sigma_array_[i] = sigma_array_[i] + glashow_total_[i]/2.;
+              sigma_array_[i] = sigma_array_orig_[i] + glashow_total_[i]/2.;
               for(unsigned int j=0; j<NumNodes_;j++){
                 *(RHSMatrix_.get() +i*NumNodes_+j) = *(RHSMatrix_.get() +i*NumNodes_+j) + *(glashow_partial_.get() + i*NumNodes_+j)/2.;
               }

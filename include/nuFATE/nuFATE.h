@@ -26,6 +26,16 @@
 
 namespace nufate{
 
+/// \struct Square_matrix_double
+/// \brief Very simple matrix struct used for pybinding.
+/// vec_ is the front address of a chank of double data,
+/// which will be shaped in NxN 2dim matrix in python.
+struct Square_matrix_double {
+ public :
+ unsigned int n_;
+ std::shared_ptr<double> vec_;
+};
+
 ///\class Result
 ///\brief Simple class to hold the results.
 class Result {
@@ -57,23 +67,14 @@ class Result {
    /// @return 1D vector
    std::vector<double> get_phi_0() { return phi_0_; }
 
-   /// \struct Square_matrix_double
-   /// \brief Very simple matrix struct
-   struct Square_matrix_double {
-     unsigned int dim_;
-     std::shared_ptr<double> evec_;
-   };
-
    /// \brief converter from pointer of double to Square_matrix_double object
    /// @return Square_matrix_double
-   /// dimension of eigenvectors must be NxN where
-   /// N = energy_nodes_.size()
    Square_matrix_double get_eigenvec_matrix() { 
       unsigned int n = energy_nodes_.size();
       Square_matrix_double smatrix;
-      // n x n vector 
-      smatrix.dim_ = n;
-      smatrix.evec_ = evec;   
+      // evec is n x n data
+      smatrix.n_ = n;
+      smatrix.vec_ = evec;   
       return smatrix;
    }
 
@@ -127,19 +128,28 @@ class nuFATE {
     std::string newh5_filename_;
   public:
     /// \brief Constructor
-    /// @param flv Position of the system.
+    /// @param flavor position ID of the system (1:NuE, -1:NuEBar, 2:NuMu, -2:NuMuBar, 3:NuTau, -3:NuTauBar)
     /// @param gamma spectral index of input flux.
     /// @param h5_filename name of hdf5 file containing the cross sections.
     /// @param include_secondaries if true secondaries are added to the flux propagation.
     nuFATE(int flv, double gamma, std::string h5_filename, bool include_secondaries);
     /// \brief Constructor
-    /// @param flv Position of the system.
+    /// @param flavor position ID of the system (1:NuE, -1:NuEBar, 2:NuMu, -2:NuMuBar, 3:NuTau, -3:NuTauBar)
     /// @param gamma spectral index of input flux.
     /// @param energy_nodes energy nodes in GeV.
-    /// @param sigma_array total cross section at each energy node in cm^2.
-    /// @param dsigma_dE square array of differential cross section in cm^2/GeV.
+    /// @param sigma_array total cross section(CC+NC) at each energy node in cm^2.
+    /// @param dsigma_dE square array of differential cross section (NC only) in cm^2/GeV.
     /// @param include_secondaries if true secondaries are added to the flux propagation.
     nuFATE(int flv, double gamma, std::vector<double> energy_nodes, std::vector<double> sigma_array, std::vector<std::vector<double>> dsigma_dE, bool include_secondaries);
+    /// \brief Constructor
+    /// @param flavor position ID of the system (1:NuE, -1:NuEBar, 2:NuMu, -2:NuMuBar, 3:NuTau, -3:NuTauBar)
+    /// @param gamma spectral index of input flux.
+    /// @param cc_sigma_file file path for charge current(CC) total cross section in input format of nuSQuIDS
+    /// @param nc_sigma_file file path for neutral current(NC) total cross section in input format of nuSQuIDS
+    /// @param nc_dsigma_file file path to NC dSigma/dE differential cross section in input format of nuSQuIDS
+    /// @param include_secondaries if true secondaries are added to the flux propagation.
+    nuFATE(int flv, double gamma, std::string cc_sigma_file, std::string nc_sigma_file, std::string nc_dsigma_file, bool include_secondaries);
+ 
     /// \brief Eigensystem calculator
     Result getEigensystem();
     /// \brief Function to get Earth column density
@@ -155,10 +165,24 @@ class nuFATE {
     double getNumNodes() const;
     /// \brief Function to toggle secondaries
     void setAddSecondaries(bool opt) { add_secondary_term_ = opt;}
+
+    /// \brief Function to get energy nodes
+    std::vector<double> getEnergyNodes() { return energy_nodes_; }
+    /// \brief Function to get total crosssections (CC + NC)
+    std::vector<double> getTotalCrossSections() { return sigma_array_; }
+    /// \brief Function to get dsigma_dE differential crossection (for neutral-current only)
+    Square_matrix_double getNCDifferentialCrossSections() {
+       Square_matrix_double smatrix;
+       smatrix.n_ = NumNodes_;
+       smatrix.vec_ = dxs_array_;
+       return smatrix; 
+    }
+
   protected:
+    void Init(double gamma, const std::vector<double> &enodes, const std::vector<double> &sigmas, const std::vector<std::vector<double> > &dsigma);
     void AddAdditionalTerms();
     void LoadCrossSectionFromHDF5();
-    void SetCrossSectionsFromInput(std::vector<std::vector<double>> dsigma_dE);
+    void SetCrossSectionsFromInput(const std::vector<double> &sigma, const std::vector<std::vector<double>> &dsigma_dE);
     void SetInitialFlux();
     void set_glashow_total();
     void set_glashow_partial();
@@ -181,6 +205,7 @@ class nuFATE {
     int dxsdim_[2];
     std::vector<double> energy_nodes_;
     std::vector<double> sigma_array_;
+    std::vector<double> sigma_array_orig_;
     std::vector<double> DeltaE_;
     std::vector<double> phi_0_;
     std::vector<double> glashow_total_;
