@@ -1,3 +1,8 @@
+#===================================================
+# test 1 : load test
+# Is nuFATE object loading cross sections correctly?
+#===================================================
+
 import nuFATEpy as nuf
 import numpy as np
 import sys
@@ -8,6 +13,7 @@ gamma_index = 2.2
 include_secondaries = False
 
 #---------------------------------------
+# test 1:
 # load test for default constructor
 #---------------------------------------
 h5_filename = "../NuFATECrossSections.h5"
@@ -31,6 +37,7 @@ np.testing.assert_allclose(default_dxs_array, dsigma_array, rtol=1e-5, atol=0, e
 
 
 #---------------------------------------
+# test 2:
 # load test for 3rd constructor
 #---------------------------------------
 
