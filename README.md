@@ -175,14 +175,18 @@ NuFATE accepts text-based cross section files in format of nuSQuIDS cross sectio
 Currently NuTau regeneration is not supported yet for text-based cross sections. 
 
 Format of total cross section file must have 7 column and N rows where N = number of energy bins.  
+
 - Energy  NuE_Xsec  NuEBar_Xsec  NuMu_Xsec  NuMuBar_Xsec  NuTau_Xsec  NuTauBar_Xsec
+
 Energies must be in GeV and cross sections(Xsec) must be in cm^2.  
 Cross section files are separated for CC interaction and NC interaction.
 
 
 NuFATE uses dsigma/dE differential cross section for NC interaction.  
 The differential cross section file must have 8 column and N rows where N = number of energy bins.  
+
 - Energy_in  Energy_out  NuE_Xsec  NuEBar_Xsec  NuMu_Xsec  NuMuBar_Xsec  NuTau_Xsec  NuTauBar_Xsec
+
 Energies must be in GeV and cross sections(Xsec) must be in cm^2.
 
 
