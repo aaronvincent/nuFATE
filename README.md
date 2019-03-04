@@ -91,9 +91,9 @@ Cautions and some restrictions of NuFATE
 NuFATE provides two modes to calculate attenuated flux. 
 The first mode(Mode 1) calculates attenuation of initial neutrino flux which particle type (mentioned as "flavor" in program code) is defined via flavor_id.
 The second mode(Mode 2) includes contribution of NuTau's regeneration effect on NuE or NuMu flux, as well as NuTau to NuTau regeneration effect. 
-Note that Mode 2 can be used only when we assume initial flux of NuE:NuEBar:NuMu:NuMuBar:NuTau:NuTauBar as 1:1:1:1:1:1.
+Note that the Mode 2 can be used only when we assume initial flux of NuE:NuEBar:NuMu:NuMuBar:NuTau:NuTauBar as 1:1:1:1:1:1, and if the condition is fulfilled, the authors always recommend using Mode 2 to include NuTau regeneration effect.
 
-The flavor_id must be one of the integer numbers list below.
+The flavor_id must be one of the integer numbers listed below.
 
 * 1 for NuE
 * -1 for NuEBar
@@ -102,12 +102,18 @@ The flavor_id must be one of the integer numbers list below.
 * 3 for NuTau
 * -3 for NuTauBar
 
-NuEBar, NuTau and NuTauBar may generate neutrinos with other particle types due to Glashow Resonance or Tau regeneration process. There are some restrictions in these cases as noted below.
+NuEBar, NuTau and NuTauBar may generate neutrinos with other particle types due to Glashow Resonance or Tau regeneration process. Read notes listed below for each case.
 
 ### NuEBar
 
 NuEBar may have Glashow Resonance interaction and the outgoing neutrinos from W- decay could be any flavor.
-NuFATE takes into account of only one case of them: the NuEBar + e- -> (W-) -> e- + NuEBar. In other words, there is no function to get the arrival flux from NuEBar to NuMuBar or NuTauBar. To estimate these contributions, use nuSQuIDS.
+
+1) NuEBar + e- -> (W-) -> e- + NuEBar
+2) NuEBar + e- -> (W-) -> mu- + NuMuBar
+3) NuEBar + e- -> (W-) -> tau- + NuTauBar
+4) NuEBar + e- -> (W-) -> hadrons
+
+NuFATE takes into account of the first case (NuEBar + e- -> (W-) -> e- + NuEBar) only. In other words, there is no function to get the arrival flux from NuEBar to NuMuBar or NuTauBar. To estimate these contributions, use nuSQuIDS.
 
 Cross sections of Glashow Resonance is hard coded in programs.
 
@@ -153,27 +159,32 @@ Here is the details of each component. () represents shape of matrices, N repres
 - **diffferential_cross_sections.dxsnubar (200, 200)** : NuBar-N NC differential cross section, the first axis for primary nubar energy and the second axis for scattered nubar energy. Same cross section is used for all flavors.
 
 
-- **tau_decay_spectrum.tfull (200,200)** : NuTau regeneration NuTau -> tau -> NuTau + something. The first axis for primary NuTau energy and the second axis is for regenerated NuTau energy.
-- **tau_decay_spectrum.tbarfull (200,200)** : NuTauBar regeneration NuTauBar -> TauBar -> NuTauBar + something. The first axis is for primary NuTauBar energy and the second axis is for regenerated NuTauBar energy.
-- **tau_decay_spectrum_secfull (200,200)** : NuTau -> tau -> e+NuEBar or mu+NuMuBar. The first axis is for primary NuTau energy and the second axisis for NuEBar or NuMuBar energy.
-- **tau_decay_spectrum_secbarfull (200,200)** : NuTauBar -> taubar -> e+ + NuE or mu+ + NuMu. The first axis is for primary NuTauBar energy and the second axis is for NuE or NuMu energy.
+- **tau_decay_spectrum.tfull (200,200)** : Differential cross section for NuTau regeneration NuTau -> tau -> NuTau + something. The first axis for primary NuTau energy and the second axis is for regenerated NuTau energy.
+- **tau_decay_spectrum.tbarfull (200,200)** : Differential cross section for NuTauBar regeneration NuTauBar -> TauBar -> NuTauBar + something. The first axis is for primary NuTauBar energy and the second axis is for regenerated NuTauBar energy.
+
+** TODO : the following notes may be wrong, confirm it **
+
+- **tau_decay_spectrum_secfull (200,200)** : Differential cross section for NuTau -> tau -> e+NuEBar or mu+NuMuBar. The first axis is for primary NuTau energy and the second axisis for NuEBar or NuMuBar energy.
+- **tau_decay_spectrum_secbarfull (200,200)** : Differential cross section for NuTauBar -> taubar -> e+ + NuE or mu+ + NuMu. The first axis is for primary NuTauBar energy and the second axis is for NuE or NuMu energy.
+
+For tau decay component, Appendix A and Table 1 of https://arxiv.org/abs/hep-ph/0005310 is used.
 
 
 ### Format of text-based cross sections
 NuFATE accepts text-based cross section files in format of nuSQuIDS cross section.
 Currently NuTau regeneration is not supported yet for text-based cross sections. 
 
-Format of Total cross section file must have 7 column and N rows where N = number of energy bins.  
+Format of total cross section file must have 7 column and N rows where N = number of energy bins.  
+- Energy  NuE_Xsec  NuEBar_Xsec  NuMu_Xsec  NuMuBar_Xsec  NuTau_Xsec  NuTauBar_Xsec
 Energies must be in GeV and cross sections(Xsec) must be in cm^2.  
 Cross section files are separated for CC interaction and NC interaction.
 
-- Energy  NuE_Xsec  NuEBar_Xsec  NuMu_Xsec  NuMuBar_Xsec  NuTau_Xsec  NuTauBar_Xsec
 
 NuFATE uses dsigma/dE differential cross section for NC interaction.  
-Format of  cross section file must have 8 column and N rows where N = number of energy bins.  
+The differential cross section file must have 8 column and N rows where N = number of energy bins.  
+- Energy_in  Energy_out  NuE_Xsec  NuEBar_Xsec  NuMu_Xsec  NuMuBar_Xsec  NuTau_Xsec  NuTauBar_Xsec
 Energies must be in GeV and cross sections(Xsec) must be in cm^2.
 
-- Energy_in Energy_out NuE_Xsec NuEBar_Xsec NuMu_Xsec NuMuBar_Xsec NuTau_Xsec NuTauBar_Xsec
 
 
 
