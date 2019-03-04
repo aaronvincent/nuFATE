@@ -299,7 +299,6 @@ void nuFATE::set_RHS_matrices(std::shared_ptr<double> RMatrix, std::shared_ptr<d
 
     } else{
       for(unsigned int i = 0; i < NumNodes_; i++){
-        //for(unsigned int j= i+1; j < NumNodes_; j++){ // this doesn't initialize lower triangle of RMatrix
         for(unsigned int j= 0; j < NumNodes_; j++){
           double value = 0;
           if (j>i) {
