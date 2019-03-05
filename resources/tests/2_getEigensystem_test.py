@@ -8,7 +8,7 @@ import nuFATEpy as nuf
 import numpy as np
 import sys
 
-flavor_id = -1 
+flavor_id = -1
 gamma_index = 2.2
 h5_filename = "../NuFATECrossSections.h5"
 include_secondaries = False
@@ -32,6 +32,8 @@ ntrials = 10
 eigenvec = (result.eigenvectors())[index]
 eigenval = (result.eigenvalues())[index]
 coeff = (result.coefficients())[index]
+
+print result.eigenvalues()
 
 print "start NuEBar test"
 

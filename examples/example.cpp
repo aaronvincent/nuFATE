@@ -41,7 +41,7 @@ int main(){
       for(int i=0; i<NumNodes; i++){
         double sum = 0.;
         for (int j=0; j<NumNodes;j++){
-          abs.push_back(ci[j] * exp(-t*eval[j]));
+          abs.push_back(ci[j] * exp(t*eval[j]));
           sum+= abs[j] *  *(evec.get()+i*NumNodes+j) * (std::pow(energy_nodes[i],-2) / std::pow(energy_nodes[i],-gamma));
         }
         phi_sol.push_back(sum);

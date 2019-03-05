@@ -178,6 +178,11 @@ class nuFATE {
        return smatrix; 
     }
 
+    /// \brief Calculate Relative Attenuation 
+    /// @param total number of targets, X[g/cm^2]*Na(Avogadro number) for example
+    /// @return attenuation factor (arrival_flux / initial_flux), 1D array in energy bins
+    std::vector<double> getRelativeAttenuation(double number_of_targets);
+
   protected:
     void Init(double gamma, const std::vector<double> &enodes, const std::vector<double> &sigmas, const std::vector<std::vector<double> > &dsigma);
     void AddAdditionalTerms();

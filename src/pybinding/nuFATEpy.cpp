@@ -94,6 +94,7 @@ BOOST_PYTHON_MODULE(nuFATEpy)
     .def("energy_nodes",&nuFATE::getEnergyNodes)
     .def("total_crosssections",&nuFATE::getTotalCrossSections)
     .def("nc_differential_crosssections",&nuFATE::getNCDifferentialCrossSections)
+    .def("get_relative_attenuation",&nuFATE::getRelativeAttenuation)
   ;
 
 }

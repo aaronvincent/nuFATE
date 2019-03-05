@@ -123,10 +123,6 @@ void nuFATE::Init(double gamma, const std::vector<double> &energy_nodes, const s
   NumNodes_ = energy_nodes_.size();
   Emax_ = energy_nodes_.back();
   Emin_ = energy_nodes_.front();
-  if(sigma_array.size() != NumNodes_)
-    throw std::runtime_error("nuFATE::nuFATE Total cross section array does not match energy nodes size.");
-  if(dsigma_dE.size() != NumNodes_ or dsigma_dE.front().size() != NumNodes_)
-    throw std::runtime_error("nuFATE::nuFATE Differential cross section array does not match energy nodes size.");
   AllocateMemoryForMembers(NumNodes_);
   SetEnergyBinWidths();
   SetInitialFlux();
@@ -134,14 +130,23 @@ void nuFATE::Init(double gamma, const std::vector<double> &energy_nodes, const s
 }
 
 void nuFATE::SetCrossSectionsFromInput(const std::vector<double> &sigma_array, const std::vector<std::vector<double>> &dsigma_dE){
-    for(unsigned int i = 0; i<NumNodes_; i++){
-        for(unsigned int j=0; j<NumNodes_; j++)
-        *(dxs_array_.get()+i*NumNodes_+j) = dsigma_dE[i][j];
-    }
-    sigma_array_ = sigma_array;
-    sigma_array_orig_ = sigma_array;
-    total_cross_section_set_ = true;
-    differential_cross_section_set_ = true;
+
+  if(sigma_array.size() != NumNodes_)
+    throw std::runtime_error("nuFATE::SetCrossSectionFromInput Total cross section array does not match energy nodes size.");
+  if(dsigma_dE.size() != NumNodes_ or dsigma_dE.front().size() != NumNodes_)
+    throw std::runtime_error("nuFATE::SetCrossSectionFromInput Differential cross section array does not match energy nodes size.");
+
+  for(unsigned int i = 0; i<NumNodes_; i++){
+    for(unsigned int j=0; j<NumNodes_; j++)
+    *(dxs_array_.get()+i*NumNodes_+j) = dsigma_dE[i][j];
+  }
+
+  dxsdim_[0] = NumNodes_;
+  dxsdim_[1] = NumNodes_;
+  sigma_array_ = sigma_array;
+  sigma_array_orig_ = sigma_array;
+  total_cross_section_set_ = true;
+  differential_cross_section_set_ = true;
 }
 
 void nuFATE::AllocateMemoryForMembers(unsigned int NumNodes){
@@ -567,7 +572,7 @@ Result nuFATE::getEigensystem(){
        CI.push_back(newval);
        gsl_complex eval_i
                       = gsl_vector_complex_get (eval, i);
-       EVAL.push_back(gsl_complex_abs(eval_i));
+       EVAL.push_back(-gsl_complex_abs(eval_i)); 
     }
     //free unneeded memory
     gsl_permutation_free (p);
@@ -582,6 +587,33 @@ Result nuFATE::getEigensystem(){
 
     return r1;
    }
+
+std::vector<double> nuFATE::getRelativeAttenuation(double number_of_targets) 
+{
+   // calculate eigensystem first
+   Result r1 = getEigensystem();
+   std::vector<double> phi_sol;
+
+   unsigned int rsize = NumNodes_; 
+   if (include_secondaries_) {
+      rsize = 2*NumNodes_;
+   }
+   phi_sol.resize(rsize);
+
+   double abs;
+   for (unsigned int i=0; i<rsize; i++){
+      double sum = 0.;
+      for (unsigned int j=0; j<rsize; j++){
+         abs = r1.ci[j] * exp(number_of_targets * r1.eval[j]);
+         // phi_0_ = initial_flux * E^2
+         // arrval_flux = abs (dot) eigenvec / E^2
+         // attenuation = arrival_flux / initial_flux = (abs(dot)eigenvec / E^2) / (phi_0_ / E^2) 
+         sum += abs *  *((r1.evec).get()+i*rsize+j);
+      }
+      phi_sol[i] = sum / r1.phi_0_[i];
+   }
+   return phi_sol;
+}
 
 struct rho_earth_params{double theta;};
 
