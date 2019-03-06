@@ -33,8 +33,6 @@ eigenvec = (result.eigenvectors())[index]
 eigenval = (result.eigenvalues())[index]
 coeff = (result.coefficients())[index]
 
-print result.eigenvalues()
-
 print "start NuEBar test"
 
 for i in range(ntrials) :
