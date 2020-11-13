@@ -5,6 +5,7 @@ import tables
 import numpy as np
 import scipy as sp
 from numpy import linalg as LA
+import gr_xs
 
 
 def get_RHS_matrices(energy_nodes, sigma_array, sig3_array, dxs_array, sec_array,
@@ -69,7 +70,7 @@ def get_RHS_matrices(energy_nodes, sigma_array, sig3_array, dxs_array, sec_array
     return RHSMatrix
 
 
-def get_eigs(flavor, gamma, h5_filename):
+def get_eigs(flavor, gamma, h5_filename, ato=None):
     """ Returns the eigenvalues for a given flavor, spectral index, and energy range.
 
     Args:.
@@ -81,6 +82,8 @@ def get_eigs(flavor, gamma, h5_filename):
         gamma:  If gamma is a string, this is the path and file name of the input spectrum (e.g. an atmospheric flux)
                 If gamma is a number, it is used as the spectral index of the initial flux, E**-gamma.
         h5_filename: complete path and filename of the h5 object that contains the cross sections.
+        ato: Atom on which to include electron velocity for GR doppler broadening. Can be one of 'H O Mg Si Ca Fe'
+             Defaults to assuming at rest electrons.
 
     Returns:
         w: right hand side matrix eigenvalues in unit of cm**2.
@@ -124,7 +127,7 @@ def get_eigs(flavor, gamma, h5_filename):
                                  dxs_array, sec_array, regen_array)
 
     if flavor == -1: #add glashow pieces
-        glashow_piece = (-np.diag(get_glashow_total(energy_nodes))+ get_glashow_partial(energy_nodes))/2.
+        glashow_piece = (-np.diag(get_glashow_total(energy_nodes, ato))+ get_glashow_partial(energy_nodes))/2.
         z = np.zeros((NumNodes, NumNodes))
         bigG = np.vstack((np.hstack((glashow_piece, z)), np.hstack((z, z))))
         RHSMatrix = RHSMatrix+bigG
@@ -154,7 +157,7 @@ def get_eigs(flavor, gamma, h5_filename):
 
     return w, v, ci, energy_nodes, phi_0
 
-def get_glashow_total(energy_nodes):
+def get_glashow_total(energy_nodes, ato):
     """ Returns the total nubar e --> W cross section
 
         Args:
@@ -173,7 +176,9 @@ def get_glashow_total(energy_nodes):
     me=511.e-6
     selectron= 2.e0*me*Enu
     sig = 1.e0/3.e0*GF**2*selectron/np.pi*(1.-(mmu**2-me**2)/selectron)**2/((1.-selectron/MW**2)**2+GW**2/MW**2)*.676/.1057 * hbarc**2
-    return sig
+    if ato is None:
+        return sig
+    return sig*gr_xs.sigma_edopp(Enu, ato)/gr_xs.sigma_erest(Enu)
 
 
 
