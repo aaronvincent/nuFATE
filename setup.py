@@ -8,8 +8,9 @@ setup(
       version='1.0',
       description='Calculates relative attenuation of a neutrino flux through the Earth',
       long_description=long_description,
-      packages=find_packages('./src/python'),
-      install_requires=['numpy', 'tables','scipy'],
+      package_dir = {'': 'src/python'},
+      py_modules = ['cascade', 'cascade_secs', 'earth', 'sun'],
+      install_requires=['numpy', 'tables','scipy', 'gr-xs'],
       author='Aaron Vincent, Ali Kheirandish, Carlos Arguelles, Ibrahim Safa',
       url='git@github.com:aaronvincent/nuFATE.git'
         )
