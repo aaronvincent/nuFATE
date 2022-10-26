@@ -12,10 +12,22 @@ can probably be obtained from your favorite package manager:
 * scipy: http://www.scipy.org/
 * tables: https://pypi.python.org/pypi/tables
 
+To install these with `pip`:
+
+```bash
+pip install numpy scipy tables
+```
+
 Recommended:
 * ipython: http://ipython.org/
 * jupyter: http://jupyter.readthedocs.io/
 * matplotlib: http://matplotlib.org/
+
+To install these with `pip`:
+
+```bash
+pip install ipython jupyter matplotlib
+```
 
 For the C++ version, you will need:
 
@@ -23,17 +35,26 @@ For the C++ version, you will need:
 * gsl (>= 1.15): http://www.gnu.org/software/gsl/
 * C++ compiler with C++11 support
 
+To install these with the `apt` package manager:
+
+```bash
+sudo apt install libhdf5-dev libgsl-dev g++ -y
+```
 
 Compiling
 ---------
 
 The Python interface can be installed by simply running:
 
-  python setup.py install
+```bash
+python setup.py install
+```
 
 Without write permissions, you can install it using:
 
-  python setup.py install --user
+```bash
+python setup.py install --user
+```
 
 The library can be compiled by running:
 
