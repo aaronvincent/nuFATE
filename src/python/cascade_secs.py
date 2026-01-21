@@ -5,7 +5,6 @@ import tables
 import numpy as np
 import scipy as sp
 from numpy import linalg as LA
-import gr_xs
 
 
 def get_RHS_matrices(energy_nodes, sigma_array, sig3_array, dxs_array, sec_array,
@@ -180,6 +179,7 @@ def get_glashow_total(energy_nodes, ato=None):
     sig = 1.e0/3.e0*GF**2*selectron/np.pi*(1.-(mmu**2-me**2)/selectron)**2/((1.-selectron/MW**2)**2+GW**2/MW**2)*.676/.1057 * hbarc**2
     if ato is None:
         return sig
+    import gr_xs
     return sig*gr_xs.sigma_edopp(Enu, ato)/gr_xs.sigma_erest(Enu)
 
 
@@ -217,4 +217,5 @@ def get_glashow_partial(energy_nodes, ato=None):
     dsig = dsig/Enuin #dy --> dE
     if ato is None:
         return dsig
+    import gr_xs
     return dsig*gr_xs.sigma_edopp(energy_nodes, ato)/gr_xs.sigma_erest(energy_nodes)
