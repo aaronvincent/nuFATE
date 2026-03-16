@@ -1,5 +1,5 @@
 OS_NAME=$(shell uname -s)
-H5DIR=/usr/local/Cellar/hdf5/1.10.1_2/lib/
+H5DIR=/usr/include/hdf5/serial/
 
 ifeq (${OS_NAME},Linux)
 DYN_SUFFIX=.so
@@ -30,8 +30,8 @@ CXXFLAGS= -std=c++11 -g -Wall -Wextra -Wshadow -Werror
 
 GSL_CFLAGS=`pkg-config gsl --cflags`
 GSL_LDFLAGS=`pkg-config gsl --libs`
-HDF5_CFLAGS=-I$(H5DIR)/../include
-HDF5_LDFLAGS=-L$(H5DIR) -lhdf5_hl -lhdf5 -L/usr/local/opt/szip/lib  -lz -ldl -lm
+HDF5_CFLAGS=-I$(H5DIR)
+HDF5_LDFLAGS=-L$(H5DIR) -lhdf5_serial_hl -lhdf5_serial -L/usr/local/opt/szip/lib  -lz -ldl -lm
 
 INCnuFATE=$(PATH_nuFATE)/include
 LIBnuFATE=$(PATH_nuFATE)/lib
